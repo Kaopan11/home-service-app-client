@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import AppLayout from '@/components/layout/AppLayout.vue'
 </script>
 
 <template>
-  <HelloWorld />
+  <AppLayout />
 </template>
