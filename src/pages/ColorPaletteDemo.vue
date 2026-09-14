@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
+import { DatePicker, TimePicker } from '@/components/ui'
+
 type ScaleStep = {
   step: string
   token: string
@@ -55,6 +58,77 @@ const utilities: UtilityColor[] = [
   { name: 'Red', token: '--red', dark: true },
   { name: 'BG', token: '--bg', dark: false },
 ]
+
+const dropdownOptions = ['Place Holder', 'Place Holder', 'Place Holder', 'Place Holder']
+const openDropdowns = ref({ left: true, right: true })
+
+function toggleDropdown(id: 'left' | 'right') {
+  openDropdowns.value[id] = !openDropdowns.value[id]
+}
+
+const uploadActive = ref(false)
+
+const RANGE_MAX = 2000
+const rangeMin = ref(0)
+const rangeMax = ref(1600)
+
+function onRangeMin(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value)
+  rangeMin.value = Math.min(value, rangeMax.value)
+}
+
+function onRangeMax(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value)
+  rangeMax.value = Math.max(value, rangeMin.value)
+}
+
+function valueFromPointer(event: PointerEvent, slider: HTMLElement) {
+  const rect = slider.getBoundingClientRect()
+  const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width))
+  return Math.round(ratio * RANGE_MAX)
+}
+
+function applyRangeThumb(thumb: 'min' | 'max', value: number) {
+  if (thumb === 'min') {
+    rangeMin.value = Math.min(value, rangeMax.value)
+    return
+  }
+  rangeMax.value = Math.max(value, rangeMin.value)
+}
+
+function onRangeTrack(event: PointerEvent) {
+  if (event.target instanceof HTMLInputElement) return
+
+  const slider = event.currentTarget as HTMLElement
+  const value = valueFromPointer(event, slider)
+  const thumb =
+    Math.abs(value - rangeMin.value) <= Math.abs(value - rangeMax.value) ? 'min' : 'max'
+  applyRangeThumb(thumb, value)
+
+  const onMove = (moveEvent: PointerEvent) => {
+    applyRangeThumb(thumb, valueFromPointer(moveEvent, slider))
+  }
+  const onUp = () => {
+    window.removeEventListener('pointermove', onMove)
+    window.removeEventListener('pointerup', onUp)
+  }
+  window.addEventListener('pointermove', onMove)
+  window.addEventListener('pointerup', onUp)
+}
+
+const rangeFillStyle = computed(() => {
+  const left = (rangeMin.value / RANGE_MAX) * 100
+  const width = ((rangeMax.value - rangeMin.value) / RANGE_MAX) * 100
+  return { left: `${left}%`, width: `${width}%` }
+})
+
+function rangeValueStyle(value: number) {
+  const pct = (value / RANGE_MAX) * 100
+  return { left: `calc(${pct / 100} * (100% - 16px) + 8px)` }
+}
+
+const demoDate = ref<Date | null>(new Date(2021, 10, 17))
+const demoTime = ref<string | null>(null)
 </script>
 
 <template>
@@ -133,6 +207,184 @@ const utilities: UtilityColor[] = [
         >
           <span class="swatch__step text-body-4">{{ item.name }}</span>
           <code class="swatch__token text-body-4">{{ item.token }}</code>
+        </div>
+      </div>
+    </section>
+
+    <section class="palette-section">
+      <h2>Inputs</h2>
+      <div class="input-gallery">
+        <div class="input-field">
+          <label class="input-label" for="input-default">Default</label>
+          <input id="input-default" class="input" type="text" placeholder="Place Holder" />
+        </div>
+        <div class="input-field">
+          <label class="input-label" for="input-focus">Focus</label>
+          <input
+            id="input-focus"
+            class="input input--focus"
+            type="text"
+            placeholder="Place Holder"
+          />
+        </div>
+        <div class="input-field">
+          <label class="input-label" for="input-success">Success</label>
+          <input
+            id="input-success"
+            class="input input--success"
+            type="text"
+            placeholder="Place Holder"
+          />
+        </div>
+        <div class="input-field">
+          <label class="input-label" for="input-disabled">Disable</label>
+          <input id="input-disabled" class="input" type="text" placeholder="Place Holder" disabled />
+        </div>
+        <div class="input-field">
+          <label class="input-label" for="input-error">Error</label>
+          <input
+            id="input-error"
+            class="input input--error"
+            type="text"
+            placeholder="Place Holder"
+          />
+          <p class="input-error">Error Massage</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="palette-section">
+      <h2>Form Controls</h2>
+      <div class="control-gallery">
+        <div class="control-block">
+          <h3 class="control-block__title">Dropdown</h3>
+          <div
+            class="dropdown"
+            :class="{ 'dropdown--open': openDropdowns.left }"
+          >
+            <button
+              class="input dropdown__trigger"
+              type="button"
+              :aria-expanded="openDropdowns.left ? 'true' : 'false'"
+              @click="toggleDropdown('left')"
+            >
+              <span class="dropdown__value dropdown__value--placeholder">Place Holder</span>
+              <span class="icon icon--chevron" aria-hidden="true"></span>
+            </button>
+            <div class="dropdown__menu" role="listbox">
+              <button
+                v-for="(option, index) in dropdownOptions"
+                :key="`left-${index}`"
+                class="dropdown__option"
+                type="button"
+                role="option"
+              >
+                {{ option }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-block">
+          <h3 class="control-block__title">Dropdown</h3>
+          <div
+            class="dropdown"
+            :class="{ 'dropdown--open': openDropdowns.right }"
+          >
+            <button
+              class="input dropdown__trigger input--focus"
+              type="button"
+              :aria-expanded="openDropdowns.right ? 'true' : 'false'"
+              @click="toggleDropdown('right')"
+            >
+              <span class="dropdown__value dropdown__value--placeholder">Place Holder</span>
+              <span class="icon icon--chevron" aria-hidden="true"></span>
+            </button>
+            <div class="dropdown__menu" role="listbox">
+              <button
+                v-for="(option, index) in dropdownOptions"
+                :key="`right-${index}`"
+                class="dropdown__option"
+                :class="{ 'dropdown__option--active': index === 1 }"
+                type="button"
+                role="option"
+              >
+                {{ option }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-block">
+          <h3 class="control-block__title">Image Upload</h3>
+          <div class="upload" :class="{ 'upload--active': uploadActive }">
+            <label
+              class="upload__dropzone"
+              @dragenter.prevent="uploadActive = true"
+              @dragover.prevent="uploadActive = true"
+              @dragleave.prevent="uploadActive = false"
+              @drop.prevent="uploadActive = false"
+            >
+              <input class="upload__input" type="file" accept="image/png,image/jpeg" />
+              <svg class="upload__icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                <rect x="3.5" y="9" width="19" height="15" rx="2.5" stroke="currentColor" stroke-width="1.6" />
+                <path
+                  d="M7.5 20.5l3.8-3.8a2 2 0 012.8 0l5.4 5.4"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                />
+                <circle cx="10.5" cy="14.5" r="1.2" fill="currentColor" />
+                <circle cx="24" cy="10" r="5.2" fill="white" stroke="currentColor" stroke-width="1.6" />
+                <path d="M24 7.6v4.8M21.6 10h4.8" stroke="currentColor" stroke-width="1.6" />
+              </svg>
+              <span class="upload__title">อัพโหลดรูปภาพ หรือ ลากและวางที่นี่</span>
+              <span class="upload__hint">PNG, JPG ขนาดไม่เกิน 10MB</span>
+            </label>
+            <p class="upload__instruction">Instruction: ...</p>
+          </div>
+        </div>
+
+        <div class="control-block">
+          <h3 class="control-block__title">Price Range</h3>
+          <div class="range-card">
+            <p class="range-card__caption">{{ rangeMin }}-{{ rangeMax }}฿</p>
+            <div class="range-slider" @pointerdown="onRangeTrack">
+              <div class="range-slider__track"></div>
+              <div class="range-slider__fill" :style="rangeFillStyle"></div>
+              <input
+                class="range-slider__input"
+                type="range"
+                min="0"
+                :max="RANGE_MAX"
+                :value="rangeMin"
+                aria-label="Minimum price"
+                @input="onRangeMin"
+              />
+              <input
+                class="range-slider__input"
+                type="range"
+                min="0"
+                :max="RANGE_MAX"
+                :value="rangeMax"
+                aria-label="Maximum price"
+                @input="onRangeMax"
+              />
+            </div>
+            <div class="range-card__bounds">
+              <span class="range-card__value" :style="rangeValueStyle(rangeMin)">{{ rangeMin }}</span>
+              <span class="range-card__value" :style="rangeValueStyle(rangeMax)">{{ rangeMax }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-block">
+          <h3 class="control-block__title">Date Picker</h3>
+          <DatePicker v-model="demoDate" default-open />
+        </div>
+
+        <div class="control-block">
+          <h3 class="control-block__title">Time Picker</h3>
+          <TimePicker v-model="demoTime" default-open />
         </div>
       </div>
     </section>
@@ -234,6 +486,31 @@ const utilities: UtilityColor[] = [
   background: transparent;
 }
 
+.input-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 2rem;
+  max-width: 720px;
+  padding: 1.5rem;
+  background: var(--white);
+  border: 1px dashed var(--blue-400);
+  border-radius: 16px;
+}
+
+.control-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2.5rem 3rem;
+  align-items: start;
+}
+
+.control-block__title {
+  margin: 0 0 0.75rem;
+  color: var(--gray-500);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
 .ui-preview {
   display: flex;
   flex-direction: column;
@@ -329,6 +606,11 @@ const utilities: UtilityColor[] = [
 
   .swatch-row--accent {
     max-width: none;
+  }
+
+  .input-gallery,
+  .control-gallery {
+    grid-template-columns: 1fr;
   }
 }
 </style>
