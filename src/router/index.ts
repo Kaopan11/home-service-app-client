@@ -5,17 +5,8 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/design/colors',
-    },
-    {
-      path: '/design/colors',
-      name: 'color-palette',
-      component: () => import('@/pages/ColorPaletteDemo.vue'),
-    },
-    {
-      path: '/design/typography',
-      name: 'typography',
-      component: () => import('@/pages/TypographyDemo.vue'),
+      name: 'home',
+      component: { setup: () => () => null },
     },
   ],
 })
