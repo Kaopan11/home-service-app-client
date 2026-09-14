@@ -61,7 +61,7 @@ const utilities: UtilityColor[] = [
   <main class="palette-page">
     <header class="palette-header">
       <h1>Color Palette</h1>
-      <p class="subtitle">Home Service App design tokens — use CSS variables from <code>src/style.css</code></p>
+      <p class="text-body-2 subtitle">Home Service App design tokens — use CSS variables from <code>src/style.css</code></p>
     </header>
 
     <section class="palette-section">
@@ -74,8 +74,8 @@ const utilities: UtilityColor[] = [
           :class="{ 'swatch--dark': swatch.dark }"
           :style="{ background: `var(${swatch.token})` }"
         >
-          <span class="swatch__step">{{ swatch.step }}</span>
-          <code class="swatch__token">{{ swatch.token }}</code>
+          <span class="swatch__step text-body-4">{{ swatch.step }}</span>
+          <code class="swatch__token text-body-4">{{ swatch.token }}</code>
         </div>
       </div>
     </section>
@@ -90,8 +90,8 @@ const utilities: UtilityColor[] = [
           :class="{ 'swatch--dark': swatch.dark }"
           :style="{ background: `var(${swatch.token})` }"
         >
-          <span class="swatch__step">{{ swatch.step }}</span>
-          <code class="swatch__token">{{ swatch.token }}</code>
+          <span class="swatch__step text-body-4">{{ swatch.step }}</span>
+          <code class="swatch__token text-body-4">{{ swatch.token }}</code>
         </div>
       </div>
     </section>
@@ -106,16 +106,16 @@ const utilities: UtilityColor[] = [
             :class="{ 'swatch--dark': accent.light.dark }"
             :style="{ background: `var(${accent.light.token})` }"
           >
-            <span class="swatch__step">{{ accent.light.step }}</span>
-            <code class="swatch__token">{{ accent.light.token }}</code>
+            <span class="swatch__step text-body-4">{{ accent.light.step }}</span>
+            <code class="swatch__token text-body-4">{{ accent.light.token }}</code>
           </div>
           <div
             class="swatch swatch--wide"
             :class="{ 'swatch--dark': accent.dark.dark }"
             :style="{ background: `var(${accent.dark.token})` }"
           >
-            <span class="swatch__step">{{ accent.dark.step }}</span>
-            <code class="swatch__token">{{ accent.dark.token }}</code>
+            <span class="swatch__step text-body-4">{{ accent.dark.step }}</span>
+            <code class="swatch__token text-body-4">{{ accent.dark.token }}</code>
           </div>
         </div>
       </div>
@@ -131,8 +131,8 @@ const utilities: UtilityColor[] = [
           :class="{ 'swatch--dark': item.dark }"
           :style="{ background: `var(${item.token})` }"
         >
-          <span class="swatch__step">{{ item.name }}</span>
-          <code class="swatch__token">{{ item.token }}</code>
+          <span class="swatch__step text-body-4">{{ item.name }}</span>
+          <code class="swatch__token text-body-4">{{ item.token }}</code>
         </div>
       </div>
     </section>
@@ -144,13 +144,17 @@ const utilities: UtilityColor[] = [
           <button type="button" class="btn btn--primary">Primary Button</button>
           <button type="button" class="btn btn--secondary">Secondary</button>
         </div>
-        <p class="text-body">
-          Body text using <code>--text</code> — <strong>heading text using --text-h</strong>
+        <p class="text-body-2 preview-text">
+          Body text using <code>--text</code> — <strong class="text-headline-5">heading text using --text-h</strong>
         </p>
-        <p class="text-error">Error message using --red</p>
-        <div class="card">Card on --white with --bg surface</div>
+        <p class="text-body-3 preview-error">Error message using --red</p>
+        <div class="card text-body-2">Card on --white with --bg surface</div>
       </div>
     </section>
+
+    <nav class="palette-nav text-body-3">
+      <RouterLink to="/design/typography">Typography</RouterLink>
+    </nav>
   </main>
 </template>
 
@@ -216,12 +220,10 @@ const utilities: UtilityColor[] = [
 }
 
 .swatch__step {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-medium);
 }
 
 .swatch__token {
-  font-size: 0.625rem;
   padding: 0;
   background: transparent;
   color: inherit;
@@ -275,17 +277,17 @@ const utilities: UtilityColor[] = [
   background: var(--gray-200);
 }
 
-.text-body {
+.preview-text {
   color: var(--text);
 }
 
-.text-body strong {
+.preview-text strong {
   color: var(--text-h);
 }
 
-.text-error {
+.preview-error {
   color: var(--red);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .card {
@@ -294,6 +296,19 @@ const utilities: UtilityColor[] = [
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text-h);
+}
+
+.palette-nav {
+  margin-top: 2rem;
+}
+
+.palette-nav a {
+  color: var(--blue-600);
+  text-decoration: none;
+}
+
+.palette-nav a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 900px) {

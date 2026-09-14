@@ -12,6 +12,11 @@ const router = createRouter({
       name: 'color-palette',
       component: () => import('@/pages/ColorPaletteDemo.vue'),
     },
+    {
+      path: '/design/typography',
+      name: 'typography',
+      component: () => import('@/pages/TypographyDemo.vue'),
+    },
   ],
 })
 
