@@ -7,7 +7,8 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/service',
+      name: 'home',
+      component: () => import('@/pages/HomePage.vue'),
     },
     {
       path: '/service',
