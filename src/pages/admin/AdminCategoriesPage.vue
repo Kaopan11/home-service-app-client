@@ -1,52 +1,26 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-
-const auth = useAuthStore()
-const router = useRouter()
-
-async function handleLogout(): Promise<void> {
-  await auth.logout()
-  await router.push({ name: 'admin-login' })
-}
+import AdminLayout from '@/components/admin/AdminLayout.vue'
 </script>
 
 <template>
-  <main class="categories-page">
-    <header class="categories-page__header">
-      <h1 class="text-headline-1">หมวดหมู่</h1>
-      <button type="button" class="categories-page__logout" @click="handleLogout">ออกจากระบบ</button>
-    </header>
-    <p class="text-body-2">หน้านี้เป็น placeholder สำหรับงาน Admin Categories รอบถัดไป</p>
-  </main>
+  <AdminLayout active="categories">
+    <template #topbar>
+      <h1 class="page-title">หมวดหมู่</h1>
+    </template>
+    <p class="hint">หน้านี้เป็น placeholder สำหรับงาน Admin Categories รอบถัดไป</p>
+  </AdminLayout>
 </template>
 
 <style scoped>
-.categories-page {
-  min-height: 100svh;
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 48px 24px;
-  background: var(--bg);
-}
-
-.categories-page__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.categories-page__logout {
-  height: 44px;
-  padding: 10px 24px;
-  border: none;
-  border-radius: 8px;
-  background: var(--blue-600);
-  color: var(--white);
-  font: inherit;
+.page-title {
+  margin: 0;
+  color: var(--gray-800);
+  font-size: 20px;
   font-weight: var(--font-weight-medium);
-  cursor: pointer;
+}
+
+.hint {
+  margin: 0;
+  color: var(--gray-700);
 }
 </style>
