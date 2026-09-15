@@ -1,4 +1,13 @@
 <script setup lang="ts">
+withDefaults(
+  defineProps<{
+    isLoggedIn?: boolean
+  }>(),
+  {
+    isLoggedIn: false,
+  },
+)
+
 const userName = 'สมศรี จันทร์อังคาร'
 const avatarUrl =
   'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&h=80&q=80'
@@ -9,16 +18,8 @@ const avatarUrl =
     <div class="header__inner">
       <div class="header__left">
         <a class="header__brand" href="/" aria-label="HomeServices">
-          <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
-            <rect width="32" height="32" rx="8" fill="currentColor" />
-            <path
-              fill="#fff"
-              d="M8.5 15.2 16 8.8l7.5 6.4V23a1.2 1.2 0 0 1-1.2 1.2h-4.2v-5.2h-4.2v5.2H9.7A1.2 1.2 0 0 1 8.5 23V15.2Z"
-            />
-          </svg>
-          <span class="text-headline-5">
-            <span class="header__home">Home</span>Services
-          </span>
+          <img class="header__brand-icon" src="/icons/brand/house.svg" alt="" width="32" height="32" />
+          <span class="text-headline-5 header__brand-text">HomeServices</span>
         </a>
         <nav class="header__nav">
           <a class="header__link text-body-3" href="/service">บริการของเรา</a>
@@ -26,9 +27,12 @@ const avatarUrl =
       </div>
 
       <div class="header__actions">
-        <span class="header__user text-body-3">{{ userName }}</span>
-        <img class="header__avatar" :src="avatarUrl" :alt="userName" />
-        <button class="btn-icon" type="button" aria-label="การแจ้งเตือน"></button>
+        <template v-if="isLoggedIn">
+          <span class="header__user text-body-3">{{ userName }}</span>
+          <img class="header__avatar" :src="avatarUrl" :alt="userName" />
+          <button class="btn-icon" type="button" aria-label="การแจ้งเตือน"></button>
+        </template>
+        <RouterLink v-else to="/login" class="btn btn--secondary">เข้าสู่ระบบ</RouterLink>
       </div>
     </div>
   </header>
@@ -46,32 +50,29 @@ const avatarUrl =
 .header__inner {
   display: flex;
   align-items: center;
-  max-width: 1440px;
+  justify-content: space-between;
+  max-width: 1320px;
   min-height: 5rem;
   margin: 0 auto;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 3rem;
 }
 
 .header__left {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  margin-right: auto;
+  gap: 2.5rem;
 }
 
 .header__brand {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
   text-decoration: none;
   color: var(--btn-primary);
 }
 
-.header__brand .text-headline-5 {
-  color: var(--gray-900);
-}
-
-.header__home {
+.header__brand-text {
   color: var(--btn-primary);
 }
 
@@ -80,7 +81,7 @@ const avatarUrl =
 }
 
 .header__link {
-  color: var(--btn-primary);
+  color: var(--gray-900);
   text-decoration: none;
   font-weight: var(--font-weight-medium);
 }
@@ -119,7 +120,7 @@ const avatarUrl =
     gap: 0.375rem;
   }
 
-  .header__brand svg {
+  .header__brand-icon {
     width: 24px;
     height: 24px;
   }

@@ -6,13 +6,7 @@ import { icons } from '@/constants/icons'
   <footer class="footer">
     <div class="footer__inner">
       <div class="footer__brand">
-        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
-          <rect width="32" height="32" rx="8" fill="currentColor" />
-          <path
-            fill="#fff"
-            d="M8.5 15.2 16 8.8l7.5 6.4V23a1.2 1.2 0 0 1-1.2 1.2h-4.2v-5.2h-4.2v5.2H9.7A1.2 1.2 0 0 1 8.5 23V15.2Z"
-          />
-        </svg>
+        <img class="footer__brand-icon" src="/icons/brand/house.svg" alt="" width="32" height="32" />
         <span class="text-headline-3">HomeServices</span>
       </div>
 

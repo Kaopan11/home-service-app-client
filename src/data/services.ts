@@ -45,16 +45,17 @@ export const services: Service[] = [
     title: 'ทำความสะอาดทั่วไป',
     category: 'บริการด้านทั่วไป',
     priceMin: 500,
+    priceMax: 1000,
     image:
       'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'washer-clean',
-    title: 'ทำความสะอาดเครื่องซักผ้า',
+    title: 'ซ่อมเครื่องซักผ้า',
     category: 'บริการด้านทั่วไป',
     priceMin: 500,
     image:
-      'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=800&q=80',
+      'https://plus.unsplash.com/premium_photo-1661342406124-740ae7a0dd0e?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: 'stove-clean',
