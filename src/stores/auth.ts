@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { getMyProfile, loginWithPassword, logoutAdmin, registerUser } from '@/services/auth'
+import { loginWithPassword, logoutAdmin, registerUser } from '@/services/auth'
 import { ApiError, type AdminUser, type AuthSession, type LoginRequest, type RegisterRequest } from '@/types/auth'
 import { clearAuthStorage, readAuthStorage, writeAuthStorage } from '@/utils/authStorage'
 
@@ -97,17 +97,12 @@ export const useAuthStore = defineStore('auth', () => {
         return
       }
 
-      if (stored.session.expiresAt * 1000 <= Date.now()) {
+      if (stored.session.expiresAt * 1000 <= Date.now() || !stored.user) {
         clearAuth()
         return
       }
 
-      accessToken.value = stored.session.accessToken
-      refreshToken.value = stored.session.refreshToken
-      expiresAt.value = stored.session.expiresAt
-
-      const profile = await getMyProfile()
-      setSession(stored.session, profile)
+      setSession(stored.session, stored.user)
     } catch {
       clearAuth()
     } finally {

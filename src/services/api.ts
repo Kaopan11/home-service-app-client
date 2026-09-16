@@ -45,15 +45,8 @@ async function redirectToLoginIfUnauthorized(path: string, status: number): Prom
   useAuthStore().clearAuth()
 
   const pathName = router.currentRoute.value.path
-  if (pathName.startsWith('/admin')) {
-    if (pathName !== '/admin/login') {
-      await router.replace('/admin/login')
-    }
-    return
-  }
-
-  if (pathName !== '/login') {
-    await router.replace('/login')
+  if (pathName.startsWith('/admin') && pathName !== '/admin/login') {
+    await router.replace('/admin/login')
   }
 }
 
