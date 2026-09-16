@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { icons } from '@/constants/icons'
 import { useAuthStore } from '@/stores/auth'
@@ -12,20 +12,44 @@ const props = defineProps<{
 const FALLBACK_AVATAR =
   'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&h=80&q=80'
 
-const { user, isAuthenticated } = storeToRefs(useAuthStore())
+const auth = useAuthStore()
+const { user, isAuthenticated } = storeToRefs(auth)
+
+const localProfile = ref<{ displayName?: string; firstName?: string; lastName?: string; avatarUrl?: string } | null>(null)
+
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem('home_services_user_profile')
+    if (raw) {
+      localProfile.value = JSON.parse(raw)
+    }
+  } catch {}
+}
+
+onMounted(() => {
+  loadProfile()
+  window.addEventListener('storage', loadProfile)
+})
 
 const guestChrome = computed(() => props.guest === true)
 
 const showLogin = computed(() => {
   if (props.guest != null) return props.guest
   if (props.isLoggedIn != null) return !props.isLoggedIn
-  return !isAuthenticated.value
+  return !isAuthenticated.value && !localProfile.value
 })
 
-const userName = computed(
-  () => user.value?.displayName || user.value?.fullName || user.value?.email || 'บัญชีของฉัน',
-)
-const avatarUrl = computed(() => user.value?.avatarUrl || FALLBACK_AVATAR)
+const userName = computed(() => {
+  if (localProfile.value?.displayName) return localProfile.value.displayName
+  if (localProfile.value?.firstName && localProfile.value?.lastName) {
+    return `${localProfile.value.firstName} ${localProfile.value.lastName}`
+  }
+  return user.value?.displayName || user.value?.fullName || user.value?.email || 'บัญชีของฉัน'
+})
+
+const avatarUrl = computed(() => {
+  return localProfile.value?.avatarUrl || user.value?.avatarUrl || FALLBACK_AVATAR
+})
 </script>
 
 <template>
@@ -58,8 +82,10 @@ const avatarUrl = computed(() => user.value?.avatarUrl || FALLBACK_AVATAR)
           เข้าสู่ระบบ
         </RouterLink>
         <template v-else>
-          <span class="header__user text-body-3">{{ userName }}</span>
-          <img class="header__avatar" :src="avatarUrl" :alt="userName" />
+          <RouterLink to="/profile" class="header__user-profile" aria-label="โปรไฟล์ผู้ใช้งาน">
+            <span class="header__user text-body-3">{{ userName }}</span>
+            <img class="header__avatar" :src="avatarUrl" :alt="userName" />
+          </RouterLink>
           <button class="btn-icon" type="button" aria-label="การแจ้งเตือน"></button>
         </template>
       </div>
@@ -158,6 +184,19 @@ const avatarUrl = computed(() => user.value?.avatarUrl || FALLBACK_AVATAR)
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
+}
+
+.header__user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.header__user-profile:hover {
+  opacity: 0.85;
 }
 
 .header__user {

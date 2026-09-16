@@ -28,6 +28,11 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/profile',
+      name: 'user-profile',
+      component: () => import('@/pages/UserProfilePage.vue'),
+    },
+    {
       path: '/admin/login',
       name: 'admin-login',
       component: () => import('@/pages/admin/AdminLoginPage.vue'),
