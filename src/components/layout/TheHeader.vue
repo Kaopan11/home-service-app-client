@@ -1,38 +1,67 @@
 <script setup lang="ts">
-withDefaults(
-  defineProps<{
-    isLoggedIn?: boolean
-  }>(),
-  {
-    isLoggedIn: false,
-  },
-)
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { icons } from '@/constants/icons'
+import { useAuthStore } from '@/stores/auth'
 
-const userName = 'สมศรี จันทร์อังคาร'
-const avatarUrl =
+const props = defineProps<{
+  guest?: boolean
+  isLoggedIn?: boolean
+}>()
+
+const FALLBACK_AVATAR =
   'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&h=80&q=80'
+
+const { user, isAuthenticated } = storeToRefs(useAuthStore())
+
+const guestChrome = computed(() => props.guest === true)
+
+const showLogin = computed(() => {
+  if (props.guest != null) return props.guest
+  if (props.isLoggedIn != null) return !props.isLoggedIn
+  return !isAuthenticated.value
+})
+
+const userName = computed(
+  () => user.value?.displayName || user.value?.fullName || user.value?.email || 'บัญชีของฉัน',
+)
+const avatarUrl = computed(() => user.value?.avatarUrl || FALLBACK_AVATAR)
 </script>
 
 <template>
-  <header class="header">
+  <header class="header" :class="{ 'header--guest': guestChrome }">
     <div class="header__inner">
       <div class="header__left">
-        <a class="header__brand" href="/" aria-label="HomeServices">
-          <img class="header__brand-icon" src="/icons/brand/house.svg" alt="" width="32" height="32" />
-          <span class="text-headline-5 header__brand-text">HomeServices</span>
-        </a>
+        <RouterLink class="header__brand" :to="{ name: 'home' }" aria-label="HomeServices">
+          <img
+            class="header__brand-icon"
+            :class="{ header__logo: guestChrome }"
+            :src="icons.brand.house"
+            alt=""
+            width="32"
+            height="32"
+          />
+          <span v-if="guestChrome" class="header__name">
+            <span class="header__home">Home</span>Services
+          </span>
+          <span v-else class="text-headline-5 header__brand-text">HomeServices</span>
+        </RouterLink>
         <nav class="header__nav">
-          <a class="header__link text-body-3" href="/service">บริการของเรา</a>
+          <RouterLink class="header__link text-body-3" :to="{ name: 'service' }">
+            บริการของเรา
+          </RouterLink>
         </nav>
       </div>
 
       <div class="header__actions">
-        <template v-if="isLoggedIn">
+        <RouterLink v-if="showLogin" class="btn btn--secondary" :to="{ name: 'login' }">
+          เข้าสู่ระบบ
+        </RouterLink>
+        <template v-else>
           <span class="header__user text-body-3">{{ userName }}</span>
           <img class="header__avatar" :src="avatarUrl" :alt="userName" />
           <button class="btn-icon" type="button" aria-label="การแจ้งเตือน"></button>
         </template>
-        <RouterLink v-else to="/login" class="btn btn--secondary">เข้าสู่ระบบ</RouterLink>
       </div>
     </div>
   </header>
@@ -45,6 +74,44 @@ const avatarUrl =
   z-index: 40;
   background: var(--white);
   box-shadow: var(--shadow-sm);
+}
+
+.header--guest {
+  box-shadow: var(--shadow);
+}
+
+.header__logo {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
+.header__name {
+  font-weight: var(--font-weight-medium);
+  font-size: 1.5rem;
+  line-height: 2.25rem;
+  color: var(--blue-600);
+}
+
+.header__home {
+  color: var(--btn-primary);
+}
+
+.header--guest .header__left {
+  gap: 3.75rem;
+}
+
+.header--guest .header__link {
+  padding: 10px;
+  font-size: var(--headline-5-size);
+  font-weight: var(--font-weight-medium);
+  color: var(--black);
+}
+
+.header--guest .header__actions .btn {
+  height: 40px;
+  padding: 8px 24px;
+  font-weight: var(--font-weight-medium);
 }
 
 .header__inner {
@@ -105,6 +172,47 @@ const avatarUrl =
 }
 
 @media (max-width: 768px) {
+  .header--guest {
+    box-shadow: 2px 2px 12px rgba(64, 50, 133, 0.12);
+  }
+
+  .header--guest .header__inner {
+    min-height: 53px;
+    padding: 0 16px;
+  }
+
+  .header--guest .header__left {
+    display: contents;
+  }
+
+  .header--guest .header__brand {
+    margin-right: auto;
+    gap: 4px;
+  }
+
+  .header--guest .header__logo {
+    width: 26px;
+    height: 25px;
+  }
+
+  .header--guest .header__name {
+    font-size: 14px;
+    line-height: 21px;
+  }
+
+  .header--guest .header__link {
+    padding: 16px 10px;
+    font-size: var(--body-3-size);
+    font-weight: var(--font-weight-regular);
+  }
+
+  .header--guest .header__actions .btn {
+    height: 37px;
+    padding: 8px 16px;
+    font-size: 14px;
+    line-height: 21px;
+  }
+
   .header__inner {
     min-height: 3.5rem;
     padding: 0.5rem 1rem;

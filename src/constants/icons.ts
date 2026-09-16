@@ -1,6 +1,7 @@
 export const icons = {
   brand: {
     house: '/icons/brand/house.svg',
+    facebook: '/icons/brand/facebook-logo.svg',
   },
   navigation: {
     list: '/icons/navigation/list.svg',

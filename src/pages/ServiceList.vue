@@ -6,7 +6,9 @@ import ServiceGrid from '@/components/home/ServiceGrid.vue'
 import TheFooter from '@/components/layout/TheFooter.vue'
 import TheHeader from '@/components/layout/TheHeader.vue'
 import { filterServices, services } from '@/data/services'
+import { useAuthStore } from '@/stores/auth'
 import { computed, reactive, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 
 const filters = reactive({
   query: '',
@@ -17,6 +19,8 @@ const filters = reactive({
 })
 
 const appliedQuery = ref('')
+
+const { isAuthenticated } = storeToRefs(useAuthStore())
 
 const visibleServices = computed(() =>
   filterServices(services, {
@@ -35,7 +39,7 @@ function applySearch() {
 
 <template>
   <div class="home">
-    <TheHeader />
+    <TheHeader :guest="!isAuthenticated" />
     <HeroSection />
     <ServiceFilterBar
       v-model:query="filters.query"

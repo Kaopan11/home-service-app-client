@@ -1,9 +1,9 @@
 import { ApiError, type ApiFieldError } from '@/types/auth'
-import { clearAuthStorage, getStoredAccessToken } from '@/utils/authStorage'
+import { getStoredAccessToken } from '@/utils/authStorage'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
-const PUBLIC_AUTH_PATHS = ['/api/auth/login', '/api/auth/logout']
+const PUBLIC_AUTH_PATHS = ['/api/auth/login', '/api/auth/register', '/api/auth/logout']
 
 type ApiErrorBody = {
   message?: string
@@ -29,6 +29,9 @@ function defaultErrorMessage(status: number): string {
   if (status === 401) {
     return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
   }
+  if (status === 409) {
+    return 'อีเมลนี้ถูกใช้แล้ว'
+  }
   return `API error: ${status}`
 }
 
@@ -37,10 +40,12 @@ async function redirectToLoginIfUnauthorized(path: string, status: number): Prom
     return
   }
 
-  clearAuthStorage()
-
   const { default: router } = await import('@/router')
-  if (router.currentRoute.value.path !== '/admin/login') {
+  const { useAuthStore } = await import('@/stores/auth')
+  useAuthStore().clearAuth()
+
+  const pathName = router.currentRoute.value.path
+  if (pathName.startsWith('/admin') && pathName !== '/admin/login') {
     await router.replace('/admin/login')
   }
 }
