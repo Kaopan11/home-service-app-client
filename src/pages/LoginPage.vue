@@ -21,10 +21,14 @@ async function handleSubmit(): Promise<void> {
   formError.value = ''
   submitting.value = true
   try {
-    await auth.loginCustomer({
+    const nextUser = await auth.loginCustomer({
       email: form.email.trim(),
       password: form.password,
     })
+    if (nextUser.role === 'TECHNICIAN') {
+      await router.push({ name: 'technician-account' })
+      return
+    }
     await router.push({ name: 'home' })
   } catch (error) {
     formError.value = isApiError(error) ? error.message : 'เข้าสู่ระบบไม่สำเร็จ'

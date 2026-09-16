@@ -11,6 +11,7 @@ export function useAuth() {
     isLoading,
     isAuthenticated,
     isAdmin,
+    isTechnician,
   } = storeToRefs(store)
 
   return {
@@ -21,11 +22,13 @@ export function useAuth() {
     isLoading,
     isAuthenticated,
     isAdmin,
+    isTechnician,
     login: store.login,
     loginCustomer: store.loginCustomer,
     register: store.register,
     logout: store.logout,
     restoreSession: store.restoreSession,
+    updateUser: store.updateUser,
     clearAuth: store.clearAuth,
   }
 }

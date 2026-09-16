@@ -57,7 +57,13 @@ async function redirectToLoginIfUnauthorized(path: string, status: number): Prom
 
   const { useAuthStore } = await import('@/stores/auth')
   useAuthStore().clearAuth()
-  await router.replace('/admin/login')
+
+  const pathName = router.currentRoute.value.path
+  if (pathName.startsWith('/admin') && pathName !== '/admin/login') {
+    await router.replace('/admin/login')
+  } else if (pathName.startsWith('/technician')) {
+    await router.replace('/login')
+  }
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
