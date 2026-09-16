@@ -16,6 +16,18 @@ const router = createRouter({
       component: () => import('@/pages/ServiceList.vue'),
     },
     {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/pages/LoginPage.vue'),
+      meta: { public: true },
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/pages/RegisterPage.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/admin/login',
       name: 'admin-login',
       component: () => import('@/pages/admin/AdminLoginPage.vue'),
@@ -59,6 +71,13 @@ router.beforeEach(async (to) => {
 
   if (!auth.restored) {
     await auth.restoreSession()
+  }
+
+  if (to.path === '/login' || to.path === '/register') {
+    if (auth.isAuthenticated && !auth.isAdmin) {
+      return { name: 'service' }
+    }
+    return true
   }
 
   if (to.path === '/admin/login') {

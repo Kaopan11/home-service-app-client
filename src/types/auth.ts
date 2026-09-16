@@ -25,11 +25,19 @@ export type AuthSession = {
   tokenType: string
 }
 
+export type RegisterRequest = {
+  fullName: string
+  phone: string
+  email: string
+  password: string
+  accepted: boolean
+}
+
 export type LoginResponse = {
   message: string
   data: {
     user: AdminUser
-    session: AuthSession
+    session: AuthSession | null
   }
 }
 

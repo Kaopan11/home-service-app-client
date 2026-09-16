@@ -22,6 +22,8 @@ export function useAuth() {
     isAuthenticated,
     isAdmin,
     login: store.login,
+    loginCustomer: store.loginCustomer,
+    register: store.register,
     logout: store.logout,
     restoreSession: store.restoreSession,
     clearAuth: store.clearAuth,

@@ -3,14 +3,26 @@ import type {
   AdminUser,
   LoginRequest,
   LoginResponse,
+  RegisterRequest,
   UserProfileResponse,
 } from '@/types/auth'
 
-export function loginAdmin(payload: LoginRequest): Promise<LoginResponse> {
+export function loginWithPassword(payload: LoginRequest): Promise<LoginResponse> {
   return apiFetch<LoginResponse>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(payload),
   })
+}
+
+export function registerUser(payload: RegisterRequest): Promise<LoginResponse> {
+  return apiFetch<LoginResponse>('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function loginAdmin(payload: LoginRequest): Promise<LoginResponse> {
+  return loginWithPassword(payload)
 }
 
 export async function getMyProfile(): Promise<AdminUser> {

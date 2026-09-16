@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { getMyProfile, loginAdmin, logoutAdmin } from '@/services/auth'
-import { ApiError, type AdminUser, type AuthSession, type LoginRequest } from '@/types/auth'
+import { getMyProfile, loginWithPassword, logoutAdmin, registerUser } from '@/services/auth'
+import { ApiError, type AdminUser, type AuthSession, type LoginRequest, type RegisterRequest } from '@/types/auth'
 import { clearAuthStorage, readAuthStorage, writeAuthStorage } from '@/utils/authStorage'
 
 const NOT_ADMIN_MESSAGE = 'บัญชีนี้ไม่มีสิทธิ์เข้าถึงระบบ Admin'
@@ -25,6 +25,16 @@ export const useAuthStore = defineStore('auth', () => {
     writeAuthStorage(session, nextUser)
   }
 
+  function applyLoginResponse(response: { data: { user: AdminUser; session: AuthSession | null } }): AdminUser {
+    const nextUser = response.data.user
+    const session = response.data.session
+    if (!session?.accessToken) {
+      throw new ApiError(401, 'ลงทะเบียนสำเร็จ กรุณาเข้าสู่ระบบ')
+    }
+    setSession(session, nextUser)
+    return nextUser
+  }
+
   function clearAuth(): void {
     user.value = null
     accessToken.value = null
@@ -36,14 +46,36 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(payload: LoginRequest): Promise<AdminUser> {
     isLoading.value = true
     try {
-      const response = await loginAdmin(payload)
-      const nextUser = response.data.user
+      const nextUser = applyLoginResponse(await loginWithPassword(payload))
       if (nextUser.role !== 'ADMIN') {
         clearAuth()
         throw new ApiError(403, NOT_ADMIN_MESSAGE, 'FORBIDDEN_ROLE')
       }
-      setSession(response.data.session, nextUser)
       return nextUser
+    } catch (error) {
+      clearAuth()
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function loginCustomer(payload: LoginRequest): Promise<AdminUser> {
+    isLoading.value = true
+    try {
+      return applyLoginResponse(await loginWithPassword(payload))
+    } catch (error) {
+      clearAuth()
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  async function register(payload: RegisterRequest): Promise<AdminUser> {
+    isLoading.value = true
+    try {
+      return applyLoginResponse(await registerUser(payload))
     } catch (error) {
       clearAuth()
       throw error
@@ -75,11 +107,6 @@ export const useAuthStore = defineStore('auth', () => {
       expiresAt.value = stored.session.expiresAt
 
       const profile = await getMyProfile()
-      if (profile.role !== 'ADMIN') {
-        clearAuth()
-        return
-      }
-
       setSession(stored.session, profile)
     } catch {
       clearAuth()
@@ -109,6 +136,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     isAdmin,
     login,
+    loginCustomer,
+    register,
     logout,
     restoreSession,
     clearAuth,
