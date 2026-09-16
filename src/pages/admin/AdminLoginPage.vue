@@ -62,7 +62,7 @@ async function handleSubmit(): Promise<void> {
       email: form.email.trim(),
       password: form.password,
     })
-    await router.push({ name: 'admin-categories' })
+    await router.push({ name: 'admin-services' })
   } catch (error) {
     if (isApiError(error)) {
       if (error.code === 'VALIDATION_ERROR' && error.errors?.length) {
