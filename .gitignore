@@ -25,3 +25,8 @@ dist-ssr
 
 # .env
 .env
+
+# Agent skills (npx skills)
+.agents/
+skills-lock.json
+

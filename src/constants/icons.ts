@@ -19,6 +19,18 @@ export const icons = {
     tag: '/icons/contact/tag.svg',
     inbox: '/icons/contact/inbox.svg',
   },
+  admin: {
+    house: '/icons/admin/house.png',
+    category: '/icons/admin/category.svg',
+    copy: '/icons/admin/copy.svg',
+    promo: '/icons/admin/promo.svg',
+    logout: '/icons/admin/logout.svg',
+    search: '/icons/admin/search.svg',
+    plus: '/icons/admin/plus.svg',
+    drag: '/icons/admin/drag.svg',
+    edit: '/icons/admin/edit.svg',
+    trash: '/icons/admin/trash.svg',
+  },
   action: {
     qrCode: '/icons/action/qr-code.svg',
     editFilled: '/icons/action/edit-filled.svg',
