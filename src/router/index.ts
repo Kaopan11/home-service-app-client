@@ -36,7 +36,25 @@ const router = createRouter({
     {
       path: '/admin/categories',
       name: 'admin-categories',
-      component: () => import('@/pages/admin/AdminCategoriesPage.vue'),
+      component: () => import('@/pages/admin/categories/CategoryListPage.vue'),
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/categories/new',
+      name: 'admin-category-new',
+      component: () => import('@/pages/admin/categories/CategoryCreatePage.vue'),
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/categories/:id/edit',
+      name: 'admin-category-edit',
+      component: () => import('@/pages/admin/categories/CategoryEditPage.vue'),
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/categories/:id',
+      name: 'admin-category-detail',
+      component: () => import('@/pages/admin/categories/CategoryDetailPage.vue'),
       meta: { requiresAdmin: true },
     },
     {
@@ -82,12 +100,15 @@ router.beforeEach(async (to) => {
 
   if (to.path === '/admin/login') {
     if (getStoredAccessToken() && auth.isAdmin) {
-      return { name: 'admin-services' }
+      return { name: 'admin-categories' }
     }
     return true
   }
 
-  // ponytail: admin pages are open until login/env is ready; restore requiresAdmin check here
+  if (to.meta.requiresAdmin && (!getStoredAccessToken() || !auth.isAdmin)) {
+    return { name: 'admin-login' }
+  }
+
   return true
 })
 
