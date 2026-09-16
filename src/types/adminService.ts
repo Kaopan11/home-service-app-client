@@ -5,7 +5,7 @@ export type AdminServiceItem = {
   sortOrder: number
   name: string
   categoryName: string
-  categoryTone: AdminServiceCategoryTone
+  categoryTone: string | null
   createdAt: string
   updatedAt: string
 }

@@ -19,7 +19,7 @@ async function handleLogout(): Promise<void> {
 <template>
   <div class="admin-shell">
     <aside class="admin-sidebar">
-      <RouterLink class="admin-sidebar__brand" to="/admin/services">
+      <RouterLink class="admin-sidebar__brand" to="/admin/categories">
         <img class="admin-sidebar__logo" :src="icons.admin.house" width="32" height="32" alt="" />
         <span>HomeServices</span>
       </RouterLink>
@@ -72,7 +72,7 @@ async function handleLogout(): Promise<void> {
 .admin-shell {
   display: flex;
   min-height: 100svh;
-  background: #f3f4f6;
+  background: var(--bg);
 }
 
 .admin-sidebar {
@@ -160,6 +160,7 @@ async function handleLogout(): Promise<void> {
   height: 80px;
   padding: 0 40px;
   background: var(--white);
+  border-bottom: 1px solid var(--gray-300);
 }
 
 .admin-content {

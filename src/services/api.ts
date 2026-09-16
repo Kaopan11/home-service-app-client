@@ -1,33 +1,36 @@
-import { ApiError, type ApiFieldError } from '@/types/auth'
+import { ApiError } from '@/types/auth'
 import { getStoredAccessToken } from '@/utils/authStorage'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
 
 const PUBLIC_AUTH_PATHS = ['/api/auth/login', '/api/auth/register', '/api/auth/logout']
 
 type ApiErrorBody = {
   message?: string
   code?: string
-  errors?: ApiFieldError[]
+  errors?: { field?: string; message: string }[]
 }
 
-async function parseApiError(response: Response): Promise<ApiError> {
+async function parseApiError(response: Response, path: string): Promise<ApiError> {
   try {
     const body = (await response.json()) as ApiErrorBody
     return new ApiError(
       response.status,
-      body.message || defaultErrorMessage(response.status),
+      body.message || body.errors?.[0]?.message || defaultErrorMessage(response.status, path),
       body.code,
-      body.errors,
+      body.errors?.map((item) => ({ field: item.field ?? '', message: item.message })),
     )
   } catch {
-    return new ApiError(response.status, defaultErrorMessage(response.status))
+    return new ApiError(response.status, defaultErrorMessage(response.status, path))
   }
 }
 
-function defaultErrorMessage(status: number): string {
-  if (status === 401) {
+function defaultErrorMessage(status: number, path: string): string {
+  if (status === 401 && path === '/api/auth/login') {
     return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
+  }
+  if (status === 401) {
+    return 'กรุณาเข้าสู่ระบบอีกครั้ง'
   }
   if (status === 409) {
     return 'อีเมลนี้ถูกใช้แล้ว'
@@ -72,7 +75,7 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   }
 
   if (!response.ok) {
-    const error = await parseApiError(response)
+    const error = await parseApiError(response, path)
     await redirectToLoginIfUnauthorized(path, response.status)
     throw error
   }

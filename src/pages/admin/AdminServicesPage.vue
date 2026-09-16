@@ -2,43 +2,51 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminLayout from '@/components/admin/AdminLayout.vue'
+import AlertConfirmation from '@/components/admin/AlertConfirmation.vue'
 import { icons } from '@/constants/icons'
-import { filterAdminServices, formatAdminDateTime, MOCK_ADMIN_SERVICES } from '@/data/adminServices'
+import { filterAdminServices, formatAdminDateTime, serviceTagTone } from '@/data/adminServices'
 import { deleteAdminService, listAdminServices } from '@/services/adminServices'
 import type { AdminServiceItem } from '@/types/adminService'
 
 const router = useRouter()
 const query = ref('')
-const rows = ref<AdminServiceItem[]>([...MOCK_ADMIN_SERVICES])
+const rows = ref<AdminServiceItem[]>([])
 const loading = ref(true)
-const usingFallback = ref(false)
+const error = ref('')
+const pendingDelete = ref<AdminServiceItem | null>(null)
+const deleting = ref(false)
 
 const visibleRows = computed(() => filterAdminServices(rows.value, query.value))
 
-onMounted(async () => {
+onMounted(loadServices)
+
+async function loadServices(): Promise<void> {
   loading.value = true
+  error.value = ''
   try {
-    const data = await listAdminServices()
-    rows.value = data
-    usingFallback.value = data === MOCK_ADMIN_SERVICES
-    if (!data.length) {
-      rows.value = MOCK_ADMIN_SERVICES
-      usingFallback.value = true
-    }
+    rows.value = await listAdminServices()
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'ไม่สามารถโหลดข้อมูลบริการได้'
+    rows.value = []
   } finally {
     loading.value = false
   }
-})
+}
 
-async function handleDelete(item: AdminServiceItem): Promise<void> {
-  if (!confirm(`ลบบริการ “${item.name}” ?`)) {
+async function confirmDelete(): Promise<void> {
+  if (!pendingDelete.value) {
     return
   }
+  deleting.value = true
+  error.value = ''
   try {
-    await deleteAdminService(item.id)
-    rows.value = rows.value.filter((row) => row.id !== item.id)
-  } catch {
-    rows.value = rows.value.filter((row) => row.id !== item.id)
+    await deleteAdminService(pendingDelete.value.id)
+    rows.value = rows.value.filter((row) => row.id !== pendingDelete.value?.id)
+    pendingDelete.value = null
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'ไม่สามารถลบบริการได้'
+  } finally {
+    deleting.value = false
   }
 }
 </script>
@@ -57,9 +65,13 @@ async function handleDelete(item: AdminServiceItem): Promise<void> {
       </button>
     </template>
 
-    <p v-if="usingFallback && !loading" class="fallback">แสดงข้อมูลตัวอย่าง เพราะยังเชื่อม API ไม่ได้</p>
-
-    <div class="table-wrap">
+    <p v-if="loading" class="status">กำลังโหลดข้อมูลบริการ...</p>
+    <p v-else-if="!rows.length && error" class="status status--error">{{ error }}</p>
+    <p v-else-if="!rows.length" class="status">ยังไม่มีบริการ</p>
+    <template v-else>
+      <p v-if="error" class="status status--error">{{ error }}</p>
+      <p v-if="!visibleRows.length" class="status">ไม่พบบริการที่ตรงกับการค้นหา</p>
+      <div v-else class="table-wrap">
       <table class="service-table">
         <thead>
           <tr>
@@ -80,12 +92,12 @@ async function handleDelete(item: AdminServiceItem): Promise<void> {
             <td class="col-index">{{ item.sortOrder }}</td>
             <td>{{ item.name }}</td>
             <td>
-              <span class="tag" :class="`tag--${item.categoryTone}`">{{ item.categoryName }}</span>
+              <span class="tag" :class="`tag--${serviceTagTone(item)}`">{{ item.categoryName }}</span>
             </td>
             <td>{{ formatAdminDateTime(item.createdAt) }}</td>
             <td>{{ formatAdminDateTime(item.updatedAt) }}</td>
             <td class="col-action">
-              <button type="button" class="icon-btn" aria-label="ลบ" @click="handleDelete(item)">
+              <button type="button" class="icon-btn" aria-label="ลบ" @click="pendingDelete = item">
                 <img :src="icons.admin.trash" width="24" height="24" alt="" />
               </button>
               <button
@@ -101,6 +113,15 @@ async function handleDelete(item: AdminServiceItem): Promise<void> {
         </tbody>
       </table>
     </div>
+    </template>
+
+    <AlertConfirmation
+      :open="Boolean(pendingDelete)"
+      :item-name="pendingDelete?.name ?? ''"
+      :loading="deleting"
+      @confirm="confirmDelete"
+      @cancel="pendingDelete = null"
+    />
   </AdminLayout>
 </template>
 
@@ -164,10 +185,14 @@ async function handleDelete(item: AdminServiceItem): Promise<void> {
   height: 20px;
 }
 
-.fallback {
+.status {
   margin: 0 0 16px;
   color: var(--gray-700);
   font-size: 14px;
+}
+
+.status--error {
+  color: var(--red);
 }
 
 .table-wrap {

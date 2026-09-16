@@ -1,4 +1,4 @@
-import type { AdminServiceItem } from '@/types/adminService'
+import type { AdminServiceCategoryTone, AdminServiceItem } from '@/types/adminService'
 
 const STAMP = '2022-02-12T22:30:00.000Z'
 
@@ -29,6 +29,19 @@ export function formatAdminDateTime(iso: string): string {
   hours = hours % 12 || 12
 
   return `${month}/${day}/${year} ${hours}:${minutes}${period}`
+}
+
+export function serviceTagTone(item: Pick<AdminServiceItem, 'categoryName' | 'categoryTone'>): AdminServiceCategoryTone {
+  if (item.categoryTone === 'kitchen' || item.categoryTone === 'bathroom' || item.categoryTone === 'general') {
+    return item.categoryTone
+  }
+  if (item.categoryName === 'บริการห้องครัว') {
+    return 'kitchen'
+  }
+  if (item.categoryName === 'บริการห้องน้ำ') {
+    return 'bathroom'
+  }
+  return 'general'
 }
 
 export function filterAdminServices(list: AdminServiceItem[], query: string): AdminServiceItem[] {
