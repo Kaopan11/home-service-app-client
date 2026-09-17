@@ -3,7 +3,12 @@ import { getStoredAccessToken } from '@/utils/authStorage'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
 
-const PUBLIC_AUTH_PATHS = ['/api/auth/login', '/api/auth/register', '/api/auth/logout']
+const PUBLIC_AUTH_PATHS = [
+  '/api/auth/login',
+  '/api/auth/logout',
+  '/api/auth/register',
+  '/api/services',
+]
 
 type ApiErrorBody = {
   message?: string
