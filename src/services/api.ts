@@ -56,6 +56,8 @@ async function redirectToLoginIfUnauthorized(path: string, status: number): Prom
   const pathName = router.currentRoute.value.path
   if (pathName.startsWith('/admin') && pathName !== '/admin/login') {
     await router.replace('/admin/login')
+  } else if (!pathName.startsWith('/admin') && pathName !== '/login' && pathName !== '/register') {
+    await router.replace('/login')
   }
 }
 

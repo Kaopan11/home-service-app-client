@@ -12,8 +12,23 @@ import type { UserProfile } from '@/types/user'
 const auth = useAuthStore()
 const profileStore = useProfileStore()
 
-const form = reactive<UserProfile>({ ...profileStore.profile })
-const savedFormState = ref<UserProfile>({ ...profileStore.profile })
+function normalizeProfile(p: Partial<UserProfile> | null | undefined): UserProfile {
+  return {
+    displayName: p?.displayName ?? '',
+    firstName: p?.firstName ?? '',
+    lastName: p?.lastName ?? '',
+    email: p?.email ?? '',
+    phone: p?.phone ?? '',
+    address: p?.address ?? '',
+    province: p?.province ?? '',
+    district: p?.district ?? '',
+    subdistrict: p?.subdistrict ?? '',
+    avatarUrl: p?.avatarUrl ?? '',
+  }
+}
+
+const form = reactive<UserProfile>(normalizeProfile(profileStore.profile))
+const savedFormState = ref<UserProfile>(normalizeProfile(profileStore.profile))
 
 const fieldErrors = reactive({
   displayName: '',
@@ -32,6 +47,8 @@ const uploadError = ref('')
 const isSaving = ref(false)
 const showSuccessToast = ref(false)
 const successMessage = ref('บันทึกข้อมูลผู้ใช้งานสำเร็จเรียบร้อยแล้ว')
+const showErrorToast = ref(false)
+const errorMessage = ref('')
 
 // Cascading address data
 const provinces = computed(() => getProvinces())
@@ -127,32 +144,41 @@ function validate(): boolean {
   fieldErrors.address = ''
   fieldErrors.province = ''
   fieldErrors.district = ''
+  fieldErrors.displayName = ''
+  fieldErrors.firstName = ''
+  fieldErrors.lastName = ''
+  fieldErrors.email = ''
+  fieldErrors.phone = ''
+  fieldErrors.address = ''
+  fieldErrors.province = ''
+  fieldErrors.district = ''
   fieldErrors.subdistrict = ''
 
-  if (!form.displayName.trim()) {
+  if (!(form.displayName || '').trim()) {
     fieldErrors.displayName = 'กรุณากรอกชื่อที่แสดง'
     isValid = false
   }
 
-  if (!form.firstName.trim()) {
+  if (!(form.firstName || '').trim()) {
     fieldErrors.firstName = 'กรุณากรอกชื่อจริง'
     isValid = false
   }
 
-  if (!form.lastName.trim()) {
+  if (!(form.lastName || '').trim()) {
     fieldErrors.lastName = 'กรุณากรอกนามสกุล'
     isValid = false
   }
 
-  if (!form.email.trim()) {
+  const cleanEmail = (form.email || '').trim()
+  if (!cleanEmail) {
     fieldErrors.email = 'กรุณากรอกอีเมล'
     isValid = false
-  } else if (!EMAIL_REGEX.test(form.email.trim())) {
+  } else if (!EMAIL_REGEX.test(cleanEmail)) {
     fieldErrors.email = 'รูปแบบอีเมลไม่ถูกต้อง'
     isValid = false
   }
 
-  const cleanPhone = form.phone.replace(/[-\s]/g, '')
+  const cleanPhone = (form.phone || '').replace(/[-\s]/g, '')
   if (!cleanPhone) {
     fieldErrors.phone = 'กรุณากรอกเบอร์โทรศัพท์'
     isValid = false
@@ -161,22 +187,22 @@ function validate(): boolean {
     isValid = false
   }
 
-  if (!form.address.trim()) {
+  if (!(form.address || '').trim()) {
     fieldErrors.address = 'กรุณากรอกที่อยู่'
     isValid = false
   }
 
-  if (!form.province.trim()) {
+  if (!(form.province || '').trim()) {
     fieldErrors.province = 'กรุณาเลือกจังหวัด'
     isValid = false
   }
 
-  if (!form.district.trim()) {
+  if (!(form.district || '').trim()) {
     fieldErrors.district = 'กรุณาเลือกเขต / อำเภอ'
     isValid = false
   }
 
-  if (!form.subdistrict.trim()) {
+  if (!(form.subdistrict || '').trim()) {
     fieldErrors.subdistrict = 'กรุณาเลือกแขวง / ตำบล'
     isValid = false
   }
@@ -190,22 +216,25 @@ async function handleSave() {
   }
 
   isSaving.value = true
+  errorMessage.value = ''
+  showErrorToast.value = false
   try {
     const saved = await profileStore.saveProfile({
-      displayName: form.displayName,
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-      phone: form.phone,
-      address: form.address,
-      subdistrict: form.subdistrict,
-      district: form.district,
-      province: form.province,
+      displayName: (form.displayName || '').trim(),
+      firstName: (form.firstName || '').trim(),
+      lastName: (form.lastName || '').trim(),
+      email: (form.email || '').trim(),
+      phone: (form.phone || '').trim(),
+      address: (form.address || '').trim(),
+      subdistrict: (form.subdistrict || '').trim(),
+      district: (form.district || '').trim(),
+      province: (form.province || '').trim(),
       avatarUrl: form.avatarUrl,
     })
 
-    Object.assign(form, saved)
-    savedFormState.value = { ...saved }
+    const cleanSaved = normalizeProfile(saved)
+    Object.assign(form, cleanSaved)
+    savedFormState.value = { ...cleanSaved }
 
     // Also keep auth store synced if logged in
     if (auth.user) {
@@ -214,7 +243,7 @@ async function handleSave() {
       auth.user.lastName = form.lastName
       auth.user.email = form.email
       auth.user.phone = form.phone
-      auth.user.address = `${form.address} ${form.subdistrict} ${form.district} ${form.province}`
+      auth.user.address = `${form.address} ${form.subdistrict} ${form.district} ${form.province}`.trim()
       auth.user.avatarUrl = form.avatarUrl
     }
 
@@ -222,8 +251,15 @@ async function handleSave() {
     setTimeout(() => {
       showSuccessToast.value = false
     }, 4000)
-  } catch {
-    // Error is accessible via profileStore.error
+  } catch (err: unknown) {
+    const msg = err && typeof err === 'object' && 'message' in err
+      ? String((err as { message: unknown }).message)
+      : 'ไม่สามารถบันทึกข้อมูลได้ กรุณาเข้าสู่ระบบใหม่แล้วลองอีกครั้ง'
+    errorMessage.value = msg
+    showErrorToast.value = true
+    setTimeout(() => {
+      showErrorToast.value = false
+    }, 5000)
   } finally {
     isSaving.value = false
   }
@@ -246,8 +282,9 @@ function handleCancel() {
 
 onMounted(async () => {
   const loaded = await profileStore.loadProfile()
-  Object.assign(form, loaded)
-  savedFormState.value = { ...loaded }
+  const clean = normalizeProfile(loaded)
+  Object.assign(form, clean)
+  savedFormState.value = { ...clean }
 
   // If auth.user exists, prefill from auth store if profile was not yet set
   if (auth.user) {
@@ -278,6 +315,23 @@ onMounted(async () => {
         </div>
         <span class="profile-toast__message">{{ successMessage }}</span>
         <button type="button" class="profile-toast__close" aria-label="ปิดแจ้งเตือน" @click="showSuccessToast = false">
+          &times;
+        </button>
+      </div>
+    </transition>
+
+    <!-- Error Toast Notification -->
+    <transition name="toast-fade">
+      <div v-if="showErrorToast" class="profile-toast profile-toast--error" role="alert">
+        <div class="profile-toast__icon-wrap profile-toast__icon-wrap--error">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <span class="profile-toast__message">{{ errorMessage }}</span>
+        <button type="button" class="profile-toast__close" aria-label="ปิดแจ้งเตือน" @click="showErrorToast = false">
           &times;
         </button>
       </div>
@@ -944,6 +998,11 @@ onMounted(async () => {
   font-size: 0.9375rem;
 }
 
+.profile-toast--error {
+  border-color: #f5c6cb;
+  border-left-color: #dc3545;
+}
+
 .profile-toast__icon-wrap {
   display: flex;
   align-items: center;
@@ -953,6 +1012,11 @@ onMounted(async () => {
   border-radius: 50%;
   background: #e8f5e9;
   color: #28a745;
+}
+
+.profile-toast__icon-wrap--error {
+  background: #fde8e8;
+  color: #dc3545;
 }
 
 .profile-toast__close {

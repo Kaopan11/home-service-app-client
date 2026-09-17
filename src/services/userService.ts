@@ -62,22 +62,16 @@ export async function updateUserProfile(payload: UpdateUserProfileRequest): Prom
     ...payload,
   }
 
-  // Always persist to local cache first
-  writeCachedUserProfile(merged)
-
-  try {
-    const response = await apiFetch<UserProfileApiResponse>('/api/users/me', {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    })
-    if (response?.data) {
-      writeCachedUserProfile(response.data)
-      return response.data
-    }
-  } catch {
-    // Continue with locally updated profile if backend is not yet available
+  const response = await apiFetch<UserProfileApiResponse>('/api/users/me', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+  if (response?.data) {
+    writeCachedUserProfile(response.data)
+    return response.data
   }
 
+  writeCachedUserProfile(merged)
   return merged
 }
 
