@@ -6,10 +6,8 @@ import ServiceGrid from '@/components/home/ServiceGrid.vue'
 import TheFooter from '@/components/layout/TheFooter.vue'
 import TheHeader from '@/components/layout/TheHeader.vue'
 import { filterServices, services, type Service } from '@/data/services'
-import { useAuthStore } from '@/stores/auth'
 import { getServices, type ServiceListResponse } from '@/services/services'
 import { computed, onMounted, reactive, ref } from 'vue'
-import { storeToRefs } from 'pinia'
 
 type ApiService = ServiceListResponse['data'][number]
 

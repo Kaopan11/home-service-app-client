@@ -16,6 +16,7 @@ type ApiErrorBody = {
   errors?: { field?: string; message: string }[]
 }
 
+
 async function parseApiError(response: Response, path: string): Promise<ApiError> {
   try {
     const body = (await response.json()) as ApiErrorBody
