@@ -8,6 +8,8 @@ import TheHeader from '@/components/layout/TheHeader.vue'
 import { filterServices, services, type Service } from '@/data/services'
 import { getServices, type ServiceListResponse } from '@/services/services'
 import { computed, onMounted, reactive, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/stores/auth'
 
 type ApiService = ServiceListResponse['data'][number]
 
