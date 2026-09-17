@@ -5,8 +5,34 @@ import ServiceFilterBar from '@/components/home/ServiceFilterBar.vue'
 import ServiceGrid from '@/components/home/ServiceGrid.vue'
 import TheFooter from '@/components/layout/TheFooter.vue'
 import TheHeader from '@/components/layout/TheHeader.vue'
-import { filterServices, services } from '@/data/services'
-import { computed, reactive, ref } from 'vue'
+import { filterServices, services, type Service } from '@/data/services'
+import { getServices, type ServiceListResponse } from '@/services/services'
+import { computed, onMounted, reactive, ref } from 'vue'
+
+type ApiService = ServiceListResponse['data'][number]
+
+function mapApiService(item: ApiService): Service {
+  return {
+    id: String(item.id),
+    title: item.name,
+    category: item.categoryName,
+    priceMin: 0,
+    image: '',
+  }
+}
+
+const items = ref<Service[]>([])
+const error = ref('')
+
+onMounted(async () => {
+  try {
+    const res = await getServices()
+    items.value = res.data.map(mapApiService)
+  } catch {
+    error.value = 'โหลดบริการไม่สำเร็จ แสดงข้อมูลตัวอย่างแทน'
+    items.value = services
+  }
+})
 
 const filters = reactive({
   query: '',
@@ -19,7 +45,7 @@ const filters = reactive({
 const appliedQuery = ref('')
 
 const visibleServices = computed(() =>
-  filterServices(services, {
+  filterServices(items.value, {
     query: appliedQuery.value,
     category: filters.category,
     priceMin: filters.priceMin,
@@ -46,6 +72,7 @@ function applySearch() {
       @search="applySearch"
     />
     <div class="home__content">
+      <p v-if="error" class="home__error text-body-3">{{ error }}</p>
       <ServiceGrid :services="visibleServices" />
     </div>
     <PromoBanner />
@@ -65,6 +92,11 @@ function applySearch() {
   max-width: 1440px;
   margin: 0 auto 4rem;
   padding: 2.5rem 2rem 0;
+}
+
+.home__error {
+  color: var(--gray-600);
+  text-align: center;
 }
 
 @media (max-width: 768px) {
