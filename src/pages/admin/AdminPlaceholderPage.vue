@@ -5,21 +5,11 @@ import AdminLayout from '@/components/admin/AdminLayout.vue'
 
 const route = useRoute()
 
-const active = computed(() => (route.name === 'admin-promos' ? 'promos' as const : 'services' as const))
-
-const title = computed(() => {
-  if (route.name === 'admin-promos') {
-    return 'Promotion Code'
-  }
-  if (route.name === 'admin-service-new') {
-    return 'เพิ่มบริการ'
-  }
-  return 'แก้ไขบริการ'
-})
+const title = computed(() => (route.name === 'admin-service-new' ? 'เพิ่มบริการ' : 'แก้ไขบริการ'))
 </script>
 
 <template>
-  <AdminLayout :active="active">
+  <AdminLayout active="services">
     <template #topbar>
       <h1 class="page-title">{{ title }}</h1>
     </template>
