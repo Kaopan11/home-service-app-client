@@ -83,7 +83,25 @@ const router = createRouter({
     {
       path: '/admin/promos',
       name: 'admin-promos',
-      component: () => import('@/pages/admin/AdminPlaceholderPage.vue'),
+      component: () => import('@/pages/admin/promos/PromoListPage.vue'),
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/promos/new',
+      name: 'admin-promo-new',
+      component: () => import('@/pages/admin/promos/PromoCreatePage.vue'),
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/promos/:id/edit',
+      name: 'admin-promo-edit',
+      component: () => import('@/pages/admin/promos/PromoEditPage.vue'),
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/promos/:id',
+      name: 'admin-promo-detail',
+      component: () => import('@/pages/admin/promos/PromoDetailPage.vue'),
       meta: { requiresAdmin: true },
     },
   ],

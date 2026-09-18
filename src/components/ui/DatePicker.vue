@@ -12,10 +12,12 @@ const props = withDefaults(
   defineProps<{
     placeholder?: string
     defaultOpen?: boolean
+    displayFormat?: 'long' | 'mdy'
   }>(),
   {
     placeholder: 'กรุณาเลือกวันที่',
     defaultOpen: false,
+    displayFormat: 'long',
   },
 )
 
@@ -33,8 +35,17 @@ const monthLabel = computed(() =>
   }),
 )
 
+function formatSlashDate(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  return `${month}/${day}/${date.getFullYear()}`
+}
+
 const triggerLabel = computed(() => {
   if (!selectedDate.value) return props.placeholder
+  if (props.displayFormat === 'mdy') {
+    return formatSlashDate(selectedDate.value)
+  }
   return selectedDate.value.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'long',
