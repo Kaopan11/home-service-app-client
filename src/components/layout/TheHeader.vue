@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { icons } from '@/constants/icons'
+import { USER_PROFILE_STORAGE_KEY } from '@/services/userService'
 import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps<{
@@ -13,31 +15,57 @@ const FALLBACK_AVATAR =
   'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&h=80&q=80'
 
 const auth = useAuthStore()
-const { user, isAuthenticated } = storeToRefs(auth)
+const router = useRouter()
+const route = useRoute()
+const { user, isAuthenticated, isAdmin } = storeToRefs(auth)
 
+const menuOpen = ref(false)
+const accountEl = ref<HTMLElement | null>(null)
 const localProfile = ref<{ displayName?: string; firstName?: string; lastName?: string; avatarUrl?: string } | null>(null)
 
 function loadProfile() {
   try {
-    const raw = localStorage.getItem('home_services_user_profile')
-    if (raw) {
-      localProfile.value = JSON.parse(raw)
-    }
-  } catch {}
+    const raw = localStorage.getItem(USER_PROFILE_STORAGE_KEY)
+    localProfile.value = raw ? JSON.parse(raw) : null
+  } catch {
+    localProfile.value = null
+  }
+}
+
+function closeMenuIfOutside(event: MouseEvent) {
+  if (!accountEl.value?.contains(event.target as Node)) {
+    menuOpen.value = false
+  }
+}
+
+async function logout(): Promise<void> {
+  menuOpen.value = false
+  localProfile.value = null
+  void auth.logout()
+  await router.push({ name: 'home' })
 }
 
 onMounted(() => {
   loadProfile()
   window.addEventListener('storage', loadProfile)
+  document.addEventListener('click', closeMenuIfOutside)
 })
 
-const guestChrome = computed(() => props.guest === true)
-
-const showLogin = computed(() => {
-  if (props.guest != null) return props.guest
-  if (props.isLoggedIn != null) return !props.isLoggedIn
-  return !isAuthenticated.value && !localProfile.value
+onUnmounted(() => {
+  window.removeEventListener('storage', loadProfile)
+  document.removeEventListener('click', closeMenuIfOutside)
 })
+
+watch(
+  () => route.fullPath,
+  () => {
+    menuOpen.value = false
+  },
+)
+
+const guestChrome = computed(() => !isAuthenticated.value)
+
+const showLogin = computed(() => !isAuthenticated.value)
 
 const userName = computed(() => {
   if (localProfile.value?.displayName) return localProfile.value.displayName
@@ -82,10 +110,72 @@ const avatarUrl = computed(() => {
           เข้าสู่ระบบ
         </RouterLink>
         <template v-else>
-          <RouterLink to="/profile" class="header__user-profile" aria-label="โปรไฟล์ผู้ใช้งาน">
-            <span class="header__user text-body-3">{{ userName }}</span>
-            <img class="header__avatar" :src="avatarUrl" :alt="userName" />
-          </RouterLink>
+          <div ref="accountEl" class="header__account">
+            <button
+              class="header__user-profile"
+              type="button"
+              aria-haspopup="menu"
+              :aria-expanded="menuOpen"
+              aria-label="เมนูบัญชี"
+              @click.stop="menuOpen = !menuOpen"
+            >
+              <span class="header__user text-body-3">{{ userName }}</span>
+              <img class="header__avatar" :src="avatarUrl" :alt="userName" />
+            </button>
+            <nav v-show="menuOpen" class="header__dropdown" aria-label="เมนูบัญชี">
+              <ul>
+                <li>
+                  <RouterLink
+                    class="header__dropdown-item"
+                    :to="{ name: 'user-profile' }"
+                    @click="menuOpen = false"
+                  >
+                    <img :src="icons.navigation.account" width="16" height="16" alt="" />
+                    ข้อมูลผู้ใช้งาน
+                  </RouterLink>
+                </li>
+                <li>
+                  <RouterLink
+                    class="header__dropdown-item"
+                    :to="{ name: 'user-profile' }"
+                    @click="menuOpen = false"
+                  >
+                    <img :src="icons.navigation.list" width="16" height="16" alt="" />
+                    รายการคำสั่งซ่อม
+                  </RouterLink>
+                </li>
+                <li>
+                  <RouterLink
+                    class="header__dropdown-item"
+                    :to="{ name: 'user-profile' }"
+                    @click="menuOpen = false"
+                  >
+                    <img :src="icons.navigation.history" width="16" height="16" alt="" />
+                    ประวัติการซ่อม
+                  </RouterLink>
+                </li>
+                <li v-if="isAdmin">
+                  <RouterLink
+                    class="header__dropdown-item"
+                    :to="{ name: 'admin-categories' }"
+                    @click="menuOpen = false"
+                  >
+                    <img :src="icons.navigation.history" width="16" height="16" alt="" />
+                    Admin Dashboard
+                  </RouterLink>
+                </li>
+                <li>
+                  <hr class="header__dropdown-line" />
+                </li>
+                <li>
+                  <button class="header__dropdown-item" type="button" @click.stop="logout">
+                    <img :src="icons.navigation.logout" width="16" height="16" alt="" />
+                    ออกจากระบบ
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
           <button class="btn-icon" type="button" aria-label="การแจ้งเตือน"></button>
         </template>
       </div>
@@ -186,17 +276,77 @@ const avatarUrl = computed(() => {
   flex-shrink: 0;
 }
 
+.header__account {
+  position: relative;
+}
+
 .header__user-profile {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  text-decoration: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
   cursor: pointer;
-  transition: opacity 0.15s ease;
 }
 
-.header__user-profile:hover {
-  opacity: 0.85;
+.header__dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: 180px;
+  padding: 8px 0;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  border-radius: 8px;
+}
+
+.header__dropdown ul {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.header__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 180px;
+  height: 33px;
+  padding: 6px 14px;
+  border: 0;
+  background: var(--white);
+  color: var(--gray-800);
+  font-family: inherit;
+  font-size: var(--body-3-size);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.5;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.header__dropdown-item img {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.header__dropdown-item:hover {
+  background: var(--gray-100);
+  color: var(--gray-950);
+}
+
+.header__dropdown-line {
+  width: 180px;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--gray-300);
 }
 
 .header__user {

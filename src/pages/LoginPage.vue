@@ -25,7 +25,7 @@ async function handleSubmit(): Promise<void> {
       email: form.email.trim(),
       password: form.password,
     })
-    await router.push({ name: 'service' })
+    await router.push({ name: 'home' })
   } catch (error) {
     formError.value = isApiError(error) ? error.message : 'เข้าสู่ระบบไม่สำเร็จ'
   } finally {
