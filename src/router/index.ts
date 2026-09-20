@@ -116,7 +116,7 @@ router.beforeEach(async (to) => {
 
   if (to.path === '/login' || to.path === '/register') {
     if (auth.isAuthenticated && !auth.isAdmin) {
-      return { name: 'service' }
+      return { name: 'home' }
     }
     return true
   }

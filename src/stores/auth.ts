@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { loginWithPassword, logoutAdmin, registerUser } from '@/services/auth'
+import { USER_PROFILE_STORAGE_KEY } from '@/services/userService'
 import { ApiError, type AdminUser, type AuthSession, type LoginRequest, type RegisterRequest } from '@/types/auth'
 import { clearAuthStorage, readAuthStorage, writeAuthStorage } from '@/utils/authStorage'
 
@@ -41,6 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = null
     expiresAt.value = null
     clearAuthStorage()
+    localStorage.removeItem(USER_PROFILE_STORAGE_KEY)
   }
 
   async function login(payload: LoginRequest): Promise<AdminUser> {
@@ -112,12 +114,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout(): Promise<void> {
+    const request = logoutAdmin()
+    clearAuth()
     try {
-      await logoutAdmin()
+      await request
     } catch {
-      // Always clear local session, even if logout API fails.
-    } finally {
-      clearAuth()
+      // Local session is already cleared.
     }
   }
 

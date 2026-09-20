@@ -36,7 +36,7 @@ async function handleSubmit(): Promise<void> {
       password: form.password,
       accepted: form.accepted,
     })
-    await router.push({ name: 'service' })
+    await router.push({ name: 'home' })
   } catch (error) {
     formError.value = isApiError(error) ? error.message : 'ลงทะเบียนไม่สำเร็จ'
   } finally {
