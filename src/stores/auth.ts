@@ -1,8 +1,8 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { loginWithPassword, logoutAdmin, registerUser } from '@/services/auth'
+import { loginWithFacebook, loginWithPassword, logoutAdmin, registerUser } from '@/services/auth'
 import { USER_PROFILE_STORAGE_KEY } from '@/services/userService'
-import { ApiError, type AdminUser, type AuthSession, type LoginRequest, type RegisterRequest } from '@/types/auth'
+import { ApiError, type AdminUser, type AuthSession, type FacebookLoginRequest, type LoginRequest, type RegisterRequest } from '@/types/auth'
 import { clearAuthStorage, readAuthStorage, writeAuthStorage } from '@/utils/authStorage'
 
 const NOT_ADMIN_MESSAGE = 'บัญชีนี้ไม่มีสิทธิ์เข้าถึงระบบ Admin'
@@ -90,6 +90,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function loginFacebook(payload: FacebookLoginRequest): Promise<AdminUser> {
+    isLoading.value = true
+    try {
+      return applyLoginResponse(await loginWithFacebook(payload))
+    } catch (error) {
+      clearAuth()
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   async function register(payload: RegisterRequest): Promise<AdminUser> {
     isLoading.value = true
     try {
@@ -151,6 +163,7 @@ export const useAuthStore = defineStore('auth', () => {
     isTechnician,
     login,
     loginCustomer,
+    loginFacebook,
     register,
     logout,
     restoreSession,

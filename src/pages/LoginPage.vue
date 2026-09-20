@@ -5,6 +5,7 @@ import { icons } from '@/constants/icons'
 import TheHeader from '@/components/layout/TheHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { isApiError } from '@/types/auth'
+import { startFacebookLogin } from '@/utils/facebookOAuth'
 
 const router = useRouter()
 const route = useRoute()
@@ -82,7 +83,7 @@ async function handleSubmit(): Promise<void> {
 
         <p class="auth-divider">หรือลงชื่อเข้าใช้ผ่าน</p>
 
-        <button class="btn btn--secondary auth-facebook" type="button">
+        <button class="btn btn--secondary auth-facebook" type="button" @click="startFacebookLogin">
           <img
             :src="icons.brand.facebook"
             width="23"

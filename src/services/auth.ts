@@ -1,6 +1,7 @@
 import { apiFetch } from '@/services/api'
 import type {
   AdminUser,
+  FacebookLoginRequest,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
@@ -16,6 +17,13 @@ export function loginWithPassword(payload: LoginRequest): Promise<LoginResponse>
 
 export function registerUser(payload: RegisterRequest): Promise<LoginResponse> {
   return apiFetch<LoginResponse>('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function loginWithFacebook(payload: FacebookLoginRequest): Promise<LoginResponse> {
+  return apiFetch<LoginResponse>('/api/auth/facebook', {
     method: 'POST',
     body: JSON.stringify(payload),
   })
