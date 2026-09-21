@@ -50,22 +50,27 @@ async function redirectToLoginIfUnauthorized(path: string, status: number): Prom
   }
 
   const { default: router } = await import('@/router')
+  const current = router.currentRoute.value
+  const pathName = current.path
   const { useAuthStore } = await import('@/stores/auth')
-  const pathName = router.currentRoute.value.path
-
-  if (pathName === '/admin/login' || pathName === '/login') {
-    return
-  }
-
-  useAuthStore().clearAuth()
 
   if (pathName.startsWith('/admin')) {
+    if (pathName === '/admin/login') {
+      return
+    }
+    useAuthStore().clearAuth()
     await router.replace('/admin/login')
     return
   }
 
-  if (pathName.startsWith('/technician')) {
-    await router.replace('/login')
+  // Customer session expired or rejected: drop it, and bounce if the page needs login.
+  const auth = useAuthStore()
+  if (!auth.isAuthenticated) {
+    return
+  }
+  auth.clearAuth()
+  if (current.meta.requiresAuth) {
+    await router.replace({ name: 'login', query: { redirect: current.fullPath } })
   }
 }
 
