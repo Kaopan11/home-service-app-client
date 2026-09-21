@@ -8,10 +8,12 @@ const props = withDefaults(
   defineProps<{
     placeholder?: string
     defaultOpen?: boolean
+    hourCycle?: 'h23' | 'h12'
   }>(),
   {
     placeholder: 'กรุณาเลือกเวลา',
     defaultOpen: false,
+    hourCycle: 'h23',
   },
 )
 
@@ -43,7 +45,20 @@ const timeValue = computed(
   () => `${padTime(selectedHour.value)}:${padTime(selectedMinute.value)}`,
 )
 
-const triggerLabel = computed(() => selectedTime.value ?? props.placeholder)
+function format12Hour(value: string): string {
+  const { hour, minute } = parseTime(value)
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const displayHour = hour % 12 || 12
+  return `${displayHour}:${padTime(minute)} ${period}`
+}
+
+const triggerLabel = computed(() => {
+  if (!selectedTime.value) return props.placeholder
+  if (props.hourCycle === 'h12') {
+    return format12Hour(selectedTime.value)
+  }
+  return selectedTime.value
+})
 
 function scrollSelectedIntoView() {
   for (const column of [hourColumn.value, minuteColumn.value]) {

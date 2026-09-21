@@ -1,4 +1,8 @@
 export const icons = {
+  brand: {
+    house: '/icons/brand/house.svg',
+    facebook: '/icons/brand/facebook-logo.svg',
+  },
   navigation: {
     list: '/icons/navigation/list.svg',
     history: '/icons/navigation/history.svg',
@@ -15,6 +19,18 @@ export const icons = {
     phone: '/icons/contact/phone.svg',
     tag: '/icons/contact/tag.svg',
     inbox: '/icons/contact/inbox.svg',
+  },
+  admin: {
+    house: '/icons/admin/house.png',
+    category: '/icons/admin/category.svg',
+    copy: '/icons/admin/copy.svg',
+    promo: '/icons/admin/promo.svg',
+    logout: '/icons/admin/logout.svg',
+    search: '/icons/admin/search.svg',
+    plus: '/icons/admin/plus.svg',
+    drag: '/icons/admin/drag.svg',
+    edit: '/icons/admin/edit.svg',
+    trash: '/icons/admin/trash.svg',
   },
   action: {
     qrCode: '/icons/action/qr-code.svg',
