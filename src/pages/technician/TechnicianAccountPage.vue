@@ -256,7 +256,7 @@ async function handleSubmit(): Promise<void> {
       <section class="block">
         <h2 class="block__title">สถานะบัญชี</h2>
         <div class="block__body">
-          <div class="status">
+          <div class="availability">
             <button
               type="button"
               class="switch"
@@ -265,9 +265,9 @@ async function handleSubmit(): Promise<void> {
               :aria-checked="form.available"
               @click="form.available = !form.available"
             />
-            <div class="status__copy">
-              <p class="status__label">พร้อมให้บริการ</p>
-              <p class="status__hint">
+            <div class="availability__copy">
+              <p class="availability__label">พร้อมให้บริการ</p>
+              <p class="availability__hint">
                 ระบบจะแสดงคำสั่งซ่อมในบริเวณใกล้เคียงตำแหน่งที่อยู่ปัจจุบัน ให้สามารถเลือกงานได้
               </p>
             </div>
@@ -447,10 +447,11 @@ async function handleSubmit(): Promise<void> {
   flex-shrink: 0;
 }
 
-.status {
+.availability {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  background: transparent;
 }
 
 .switch {
@@ -487,26 +488,28 @@ async function handleSubmit(): Promise<void> {
   transform: translateX(16px);
 }
 
-.status__copy {
+.availability__copy {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  background: transparent;
 }
 
-.status__label {
+.availability__label {
   margin: 0;
   color: var(--gray-800);
   font-size: 16px;
   font-weight: var(--font-weight-medium);
 }
 
-.status__hint {
+.availability__hint {
   margin: 0;
   max-width: 520px;
   color: var(--gray-500);
   font-size: 14px;
   font-weight: var(--font-weight-regular);
   line-height: 1.5;
+  background: transparent;
 }
 
 .check {

@@ -55,7 +55,7 @@ async function handleLogout(): Promise<void> {
           :to="{ name: 'technician-jobs' }"
         >
           <img :src="icons.navigation.list" width="24" height="24" alt="" />
-          รายการคำสั่งซ่อม
+          <span>รายการคำสั่งซ่อม</span>
         </RouterLink>
         <RouterLink
           class="tech-sidebar__link"
@@ -63,7 +63,7 @@ async function handleLogout(): Promise<void> {
           :to="{ name: 'technician-history' }"
         >
           <img :src="icons.navigation.history" width="24" height="24" alt="" />
-          ประวัติการซ่อม
+          <span>ประวัติการซ่อม</span>
         </RouterLink>
         <RouterLink
           class="tech-sidebar__link"
@@ -71,7 +71,7 @@ async function handleLogout(): Promise<void> {
           :to="{ name: 'technician-account' }"
         >
           <img :src="icons.navigation.account" width="24" height="24" alt="" />
-          ตั้งค่าบัญชีผู้ใช้
+          <span>ตั้งค่าบัญชีผู้ใช้</span>
         </RouterLink>
       </nav>
 
@@ -95,16 +95,20 @@ async function handleLogout(): Promise<void> {
 <style scoped>
 .tech-shell {
   display: flex;
-  min-height: 100svh;
+  height: 100svh;
+  max-height: 100svh;
+  overflow: hidden;
   background: var(--bg);
 }
 
 .tech-sidebar {
   display: flex;
   flex-direction: column;
-  width: 260px;
+  width: 240px;
   flex-shrink: 0;
+  height: 100%;
   padding: 24px 16px;
+  overflow: hidden;
   background: var(--blue-950);
   color: var(--white);
 }
@@ -114,20 +118,23 @@ async function handleLogout(): Promise<void> {
   align-items: center;
   gap: 8px;
   height: 48px;
-  padding: 0 16px;
+  padding: 0 12px;
   margin-bottom: 24px;
   border-radius: 8px;
   background: var(--white);
   color: var(--blue-500);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: var(--font-weight-medium);
   text-decoration: none;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .tech-sidebar__logo {
   width: 32px;
   height: 32px;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 .tech-sidebar__nav {
@@ -135,15 +142,17 @@ async function handleLogout(): Promise<void> {
   flex-direction: column;
   gap: 8px;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .tech-sidebar__link,
 .tech-sidebar__logout {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   min-height: 48px;
-  padding: 0 16px;
+  padding: 0 12px;
   border: none;
   border-radius: 8px;
   background: transparent;
@@ -153,6 +162,13 @@ async function handleLogout(): Promise<void> {
   text-decoration: none;
   cursor: pointer;
   text-align: left;
+  overflow: hidden;
+}
+
+.tech-sidebar__link span:not(.tech-sidebar__badge) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -175,24 +191,29 @@ async function handleLogout(): Promise<void> {
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  margin-left: 4px;
+  margin-left: auto;
   border-radius: 999px;
   background: var(--red);
   color: var(--white);
   font-size: 12px;
   font-weight: var(--font-weight-medium);
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .tech-sidebar__logout {
   margin-top: auto;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .tech-main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .tech-topbar {
@@ -203,10 +224,42 @@ async function handleLogout(): Promise<void> {
   padding: 0 40px;
   background: var(--white);
   border-bottom: 1px solid var(--gray-300);
+  flex-shrink: 0;
 }
 
 .tech-content {
   flex: 1;
+  min-height: 0;
+  overflow: auto;
   padding: 40px;
+}
+
+@media (max-width: 1280px) {
+  .tech-topbar,
+  .tech-content {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+@media (max-width: 900px) {
+  .tech-sidebar {
+    width: 220px;
+    padding: 16px 12px;
+  }
+
+  .tech-sidebar__brand {
+    font-size: 16px;
+    padding: 0 8px;
+  }
+
+  .tech-topbar {
+    height: 64px;
+    padding: 0 16px;
+  }
+
+  .tech-content {
+    padding: 16px;
+  }
 }
 </style>
