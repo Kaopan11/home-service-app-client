@@ -111,7 +111,7 @@ const router = createRouter({
     {
       path: '/technician/requests',
       name: 'technician-requests',
-      component: () => import('@/pages/technician/TechnicianRequestsPage.vue'),
+      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
       meta: { requiresTechnician: true, title: 'คำขอบริการซ่อม', active: 'requests' },
     },
     {

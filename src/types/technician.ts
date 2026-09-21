@@ -40,10 +40,3 @@ export type UpdateTechnicianProfileRequest = {
   serviceIds: number[]
 }
 
-export type TechnicianJob = {
-  id: number
-  serviceName: string
-  customerName: string
-  address: string
-  status: 'WAITING_ACCEPT' | 'ACCEPTED' | 'COMPLETED' | 'CANCELLED'
-}

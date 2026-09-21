@@ -1,6 +1,5 @@
 import { apiFetch } from '@/services/api'
 import type {
-  TechnicianJob,
   TechnicianLocation,
   TechnicianProfile,
   UpdateTechnicianProfileRequest,
@@ -40,16 +39,4 @@ export async function refreshTechnicianLocation(
 export async function getWaitingAcceptCount(): Promise<number> {
   const response = await apiFetch<Envelope<{ count: number }>>('/api/technician/requests/pending-count')
   return response.data.count
-}
-
-export async function listWaitingAcceptJobs(): Promise<TechnicianJob[]> {
-  const response = await apiFetch<Envelope<TechnicianJob[]>>('/api/technician/requests')
-  return response.data ?? []
-}
-
-export async function acceptTechnicianJob(id: number): Promise<TechnicianJob> {
-  const response = await apiFetch<Envelope<TechnicianJob>>(`/api/technician/requests/${id}/accept`, {
-    method: 'POST',
-  })
-  return response.data
 }

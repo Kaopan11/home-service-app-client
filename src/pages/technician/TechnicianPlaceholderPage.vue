@@ -7,7 +7,7 @@ const route = useRoute()
 
 const active = computed(() => {
   const value = route.meta.active
-  if (value === 'jobs' || value === 'history' || value === 'account') {
+  if (value === 'requests' || value === 'jobs' || value === 'history' || value === 'account') {
     return value
   }
   return 'requests' as const
