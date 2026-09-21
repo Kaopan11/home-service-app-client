@@ -22,10 +22,14 @@ async function handleSubmit(): Promise<void> {
   formError.value = ''
   submitting.value = true
   try {
-    await auth.loginCustomer({
+    const nextUser = await auth.loginCustomer({
       email: form.email.trim(),
       password: form.password,
     })
+    if (nextUser.role === 'TECHNICIAN') {
+      await router.push({ name: 'technician-account' })
+      return
+    }
     const redirect = route.query.redirect
     const safeRedirect =
       typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')

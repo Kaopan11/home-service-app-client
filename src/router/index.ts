@@ -105,6 +105,34 @@ const router = createRouter({
       component: () => import('@/pages/admin/promos/PromoDetailPage.vue'),
       meta: { requiresAdmin: true },
     },
+    {
+      path: '/technician',
+      redirect: { name: 'technician-account' },
+    },
+    {
+      path: '/technician/requests',
+      name: 'technician-requests',
+      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
+      meta: { requiresTechnician: true, title: 'คำขอบริการซ่อม', active: 'requests' },
+    },
+    {
+      path: '/technician/jobs',
+      name: 'technician-jobs',
+      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
+      meta: { requiresTechnician: true, title: 'รายการคำสั่งซ่อม', active: 'jobs' },
+    },
+    {
+      path: '/technician/history',
+      name: 'technician-history',
+      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
+      meta: { requiresTechnician: true, title: 'ประวัติการซ่อม', active: 'history' },
+    },
+    {
+      path: '/technician/account',
+      name: 'technician-account',
+      component: () => import('@/pages/technician/TechnicianAccountPage.vue'),
+      meta: { requiresTechnician: true, title: 'ตั้งค่าบัญชีผู้ใช้', active: 'account' },
+    },
   ],
 })
 
@@ -116,6 +144,9 @@ router.beforeEach(async (to) => {
   }
 
   if (to.path === '/login' || to.path === '/register') {
+    if (auth.isAuthenticated && auth.isTechnician) {
+      return { name: 'technician-account' }
+    }
     if (auth.isAuthenticated && !auth.isAdmin) {
       return { name: 'home' }
     }
@@ -135,6 +166,10 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiresAdmin && (!getStoredAccessToken() || !auth.isAdmin)) {
     return { name: 'admin-login' }
+  }
+
+  if (to.meta.requiresTechnician && (!getStoredAccessToken() || !auth.isTechnician)) {
+    return { name: 'login' }
   }
 
   return true

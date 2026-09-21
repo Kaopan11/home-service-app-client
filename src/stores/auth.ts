@@ -17,6 +17,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => Boolean(user.value && accessToken.value))
   const isAdmin = computed(() => user.value?.role === 'ADMIN')
+  const isTechnician = computed(() => user.value?.role === 'TECHNICIAN')
 
   function setSession(session: AuthSession, nextUser: AdminUser): void {
     accessToken.value = session.accessToken
@@ -43,6 +44,21 @@ export const useAuthStore = defineStore('auth', () => {
     expiresAt.value = null
     clearAuthStorage()
     localStorage.removeItem(USER_PROFILE_STORAGE_KEY)
+  }
+
+  function updateUser(nextUser: AdminUser): void {
+    user.value = nextUser
+    if (accessToken.value && refreshToken.value && expiresAt.value != null) {
+      writeAuthStorage(
+        {
+          accessToken: accessToken.value,
+          refreshToken: refreshToken.value,
+          expiresAt: expiresAt.value,
+          tokenType: 'bearer',
+        },
+        nextUser,
+      )
+    }
   }
 
   async function login(payload: LoginRequest): Promise<AdminUser> {
@@ -132,11 +148,13 @@ export const useAuthStore = defineStore('auth', () => {
     restored,
     isAuthenticated,
     isAdmin,
+    isTechnician,
     login,
     loginCustomer,
     register,
     logout,
     restoreSession,
+    updateUser,
     clearAuth,
   }
 })
