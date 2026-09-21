@@ -4,15 +4,16 @@ import { useRouter } from 'vue-router'
 import TheHeader from '@/components/layout/TheHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { isApiError } from '@/types/auth'
-import { readFacebookCallbackParams } from '@/utils/facebookOAuth'
 
 const router = useRouter()
 const auth = useAuthStore()
 const error = ref('')
 
 onMounted(async () => {
-  // 1) อ่าน token หรือ error จาก URL ที่ Facebook ส่งกลับมา
-  const params = readFacebookCallbackParams()
+  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : ''
+  const params = new URLSearchParams(
+    hash.includes('access_token') || hash.includes('error') ? hash : window.location.search,
+  )
   const denied = params.get('error_description') || params.get('error')
   if (denied) {
     error.value = denied
@@ -26,13 +27,11 @@ onMounted(async () => {
   }
 
   try {
-    // 2) ส่ง token ให้ Spring เพื่อสร้าง/หา user แล้วเก็บ session
     await auth.loginFacebook({
       accessToken,
       refreshToken: params.get('refresh_token') || '-',
-      expiresIn: Number(params.get('expires_in')) > 0 ? Number(params.get('expires_in')) : 3600,
+      expiresIn: Number(params.get('expires_in')) || 3600,
     })
-    history.replaceState(null, '', window.location.pathname)
     await router.replace({ name: 'home' })
   } catch (caught) {
     error.value = isApiError(caught) ? caught.message : 'เข้าสู่ระบบด้วย Facebook ไม่สำเร็จ'

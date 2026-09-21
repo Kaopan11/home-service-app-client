@@ -1,4 +1,4 @@
-import { apiFetch } from '@/services/api'
+import { API_BASE_URL, apiFetch } from '@/services/api'
 import type {
   AdminUser,
   FacebookLoginRequest,
@@ -27,6 +27,14 @@ export function loginWithFacebook(payload: FacebookLoginRequest): Promise<LoginR
     method: 'POST',
     body: JSON.stringify(payload),
   })
+}
+
+/** กดปุ่มแล้วพาไป Spring จากนั้น Spring พาไป Facebook */
+export function startFacebookLogin(): void {
+  const redirectTo = `${window.location.origin}/auth/callback`
+  window.location.assign(
+    `${API_BASE_URL}/api/auth/facebook?redirectTo=${encodeURIComponent(redirectTo)}`,
+  )
 }
 
 export function loginAdmin(payload: LoginRequest): Promise<LoginResponse> {

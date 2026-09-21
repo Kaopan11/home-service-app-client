@@ -4,8 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { icons } from '@/constants/icons'
 import TheHeader from '@/components/layout/TheHeader.vue'
 import { useAuthStore } from '@/stores/auth'
+import { startFacebookLogin } from '@/services/auth'
 import { isApiError } from '@/types/auth'
-import { startFacebookLogin } from '@/utils/facebookOAuth'
 
 const router = useRouter()
 const route = useRoute()
