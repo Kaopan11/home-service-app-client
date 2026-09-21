@@ -31,6 +31,7 @@ const router = createRouter({
       path: '/profile',
       name: 'user-profile',
       component: () => import('@/pages/UserProfilePage.vue'),
+      meta: { requiresAuth: true },
     },
     {
       path: '/admin/login',
@@ -126,6 +127,10 @@ router.beforeEach(async (to) => {
       return { name: 'admin-categories' }
     }
     return true
+  }
+
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    return { name: 'login', query: { redirect: to.fullPath } }
   }
 
   if (to.meta.requiresAdmin && (!getStoredAccessToken() || !auth.isAdmin)) {
