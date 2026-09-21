@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { icons } from '@/constants/icons'
 import TheHeader from '@/components/layout/TheHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import { isApiError } from '@/types/auth'
 
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 
 const form = reactive({
@@ -25,7 +26,10 @@ async function handleSubmit(): Promise<void> {
       email: form.email.trim(),
       password: form.password,
     })
-    await router.push({ name: 'home' })
+    const redirect = route.query.redirect
+    const safeRedirect =
+      typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//')
+    await router.push(safeRedirect ? redirect : { name: 'home' })
   } catch (error) {
     formError.value = isApiError(error) ? error.message : 'เข้าสู่ระบบไม่สำเร็จ'
   } finally {
