@@ -130,19 +130,19 @@ const router = createRouter({
     },
     {
       path: '/technician',
-      redirect: { name: 'technician-account' },
+      redirect: { name: 'technician-requests' },
     },
     {
       path: '/technician/requests',
       name: 'technician-requests',
-      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
+      component: () => import('@/pages/technician/TechnicianRequestsPage.vue'),
       meta: { requiresTechnician: true, title: 'คำขอบริการซ่อม', active: 'requests' },
     },
     {
       path: '/technician/jobs',
       name: 'technician-jobs',
       component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
-      meta: { requiresTechnician: true, title: 'รายการคำสั่งซ่อม', active: 'jobs' },
+      meta: { requiresTechnician: true, title: 'รายการที่รอดำเนินการ', active: 'jobs' },
     },
     {
       path: '/technician/history',
@@ -168,7 +168,7 @@ router.beforeEach(async (to) => {
 
   if (to.path === '/login' || to.path === '/register') {
     if (auth.isAuthenticated && auth.isTechnician) {
-      return { name: 'technician-account' }
+      return { name: 'technician-requests' }
     }
     if (auth.isAuthenticated && !auth.isAdmin) {
       return { name: 'home' }

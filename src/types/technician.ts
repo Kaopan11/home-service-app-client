@@ -29,6 +29,17 @@ export type TechnicianLocation = {
   longitude: number
 }
 
+export type TechnicianRequest = {
+  id: number
+  serviceName: string
+  customerName: string
+  address: string
+  latitude: number | null
+  longitude: number | null
+  status: string
+  createdAt: string
+}
+
 export type UpdateTechnicianProfileRequest = {
   firstName: string
   lastName: string
