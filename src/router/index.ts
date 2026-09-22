@@ -33,6 +33,12 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/auth/callback',
+      name: 'auth-callback',
+      component: () => import('@/pages/FacebookCallbackPage.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/profile',
       name: 'user-profile',
       component: () => import('@/pages/UserProfilePage.vue'),
