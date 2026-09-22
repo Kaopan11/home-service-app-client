@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import BookingOptionList from '@/components/booking/BookingOptionList.vue'
@@ -7,7 +7,9 @@ import BookingStepper from '@/components/booking/BookingStepper.vue'
 import BookingSummary from '@/components/booking/BookingSummary.vue'
 import TheHeader from '@/components/layout/TheHeader.vue'
 import { useBooking } from '@/composables/useBooking'
-import { getServiceDetail } from '@/data/serviceDetails'
+import { getServiceDetail, type ServiceDetail } from '@/data/serviceDetails'
+import { services } from '@/data/services'
+import { getServiceById, type ServiceDetailDto } from '@/services/services'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
@@ -15,16 +17,56 @@ const router = useRouter()
 const { isAuthenticated } = storeToRefs(useAuthStore())
 
 const currentStep = ref(1)
-const detail = computed(() => getServiceDetail(String(route.params.id)))
+const detail = ref<ServiceDetail | null>(null)
+const loading = ref(true)
 const options = computed(() => detail.value?.options ?? [])
 
 const { quantities, increment, decrement, selectedItems, totalPrice, canContinue } =
   useBooking(options)
 
+function mapDetail(item: ServiceDetailDto): ServiceDetail {
+  const fallbackImage =
+    services.find((service) => service.title === item.name)?.image ||
+    'https://images.unsplash.com/photo-1556912173-46e0d4d0a0a2?auto=format&fit=crop&w=1440&q=80'
+  return {
+    serviceId: String(item.id),
+    title: item.name,
+    category: item.categoryName,
+    image: item.image || fallbackImage,
+    options: (item.options ?? []).map((option) => ({
+      id: String(option.id),
+      name: option.name,
+      unit: option.unit || 'ชิ้น',
+      price: Number(option.price),
+    })),
+  }
+}
+
+async function loadDetail(id: string): Promise<void> {
+  loading.value = true
+  currentStep.value = 1
+  try {
+    const response = await getServiceById(id)
+    if (response?.data) {
+      detail.value = mapDetail(response.data)
+      return
+    }
+    detail.value = getServiceDetail(id) ?? null
+  } catch {
+    detail.value = getServiceDetail(id) ?? null
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadDetail(String(route.params.id))
+})
+
 watch(
   () => route.params.id,
-  () => {
-    currentStep.value = 1
+  (id) => {
+    void loadDetail(String(id))
   },
 )
 
@@ -48,7 +90,11 @@ function goNext() {
   <div class="booking">
     <TheHeader :guest="!isAuthenticated" />
 
-    <template v-if="detail">
+    <section v-if="loading" class="booking__missing">
+      <p>กำลังโหลดบริการ...</p>
+    </section>
+
+    <template v-else-if="detail">
       <section class="hero" :style="{ backgroundImage: `url(${detail.image})` }">
         <div class="hero__inner">
           <nav class="hero__crumb" aria-label="breadcrumb">

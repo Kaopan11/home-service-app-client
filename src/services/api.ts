@@ -49,7 +49,7 @@ function defaultErrorMessage(status: number, path: string): string {
 }
 
 async function redirectToLoginIfUnauthorized(path: string, status: number): Promise<void> {
-  if (status !== 401 || PUBLIC_AUTH_PATHS.includes(path)) {
+  if (status !== 401 || path.startsWith('/api/services') || PUBLIC_AUTH_PATHS.includes(path)) {
     return
   }
 

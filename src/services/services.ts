@@ -7,6 +7,8 @@ export type ServiceListResponse = {
     name: string
     categoryName: string
     sortOrder: number
+    image?: string
+    priceMin?: number
   }[]
 }
 
