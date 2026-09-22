@@ -84,13 +84,13 @@ const router = createRouter({
     {
       path: '/admin/services/new',
       name: 'admin-service-new',
-      component: () => import('@/pages/admin/AdminPlaceholderPage.vue'),
+      component: () => import('@/pages/admin/AdminServiceFormPage.vue'),
       meta: { requiresAdmin: true },
     },
     {
       path: '/admin/services/:id/edit',
       name: 'admin-service-edit',
-      component: () => import('@/pages/admin/AdminPlaceholderPage.vue'),
+      component: () => import('@/pages/admin/AdminServiceFormPage.vue'),
       meta: { requiresAdmin: true },
     },
     {
