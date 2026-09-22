@@ -13,13 +13,17 @@ import { useAuthStore } from '@/stores/auth'
 
 type ApiService = ServiceListResponse['data'][number]
 
+const PLACEHOLDER_IMAGE =
+  'https://images.unsplash.com/photo-1556912173-46e0d4d0a0a2?auto=format&fit=crop&w=800&q=80'
+
 function mapApiService(item: ApiService): Service {
+  const fallback = services.find((service) => service.title === item.name)
   return {
     id: String(item.id),
     title: item.name,
     category: item.categoryName,
-    priceMin: 0,
-    image: '',
+    priceMin: Number(item.priceMin ?? fallback?.priceMin ?? 0),
+    image: item.image || fallback?.image || PLACEHOLDER_IMAGE,
   }
 }
 
