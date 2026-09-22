@@ -354,7 +354,7 @@ onMounted(async () => {
                 <span class="sidebar-nav__text">ข้อมูลผู้ใช้งาน</span>
               </a>
 
-              <a href="#reset-password" class="sidebar-nav__item" @click.prevent>
+              <RouterLink :to="{ name: 'profile-password' }" class="sidebar-nav__item">
                 <span class="sidebar-nav__icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -362,7 +362,7 @@ onMounted(async () => {
                   </svg>
                 </span>
                 <span class="sidebar-nav__text">รีเซ็ตรหัสผ่าน</span>
-              </a>
+              </RouterLink>
 
               <a href="#repair-orders" class="sidebar-nav__item" @click.prevent>
                 <span class="sidebar-nav__icon">
