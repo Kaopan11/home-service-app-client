@@ -40,18 +40,49 @@ function formatCvv(event: Event) {
   card.cvv = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 4)
 }
 
+function luhnCheck(num: string): boolean {
+  const digits = num.replace(/\D/g, '')
+  let sum = 0
+  let isEven = false
+
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let digit = parseInt(digits[i])
+    if (isEven) {
+      digit *= 2
+      if (digit > 9) digit -= 9
+    }
+    sum += digit
+    isEven = !isEven
+  }
+  return sum % 10 === 0
+}
+
+function isCardExpired(month: number, year: number): boolean {
+  const now = new Date()
+  const cardYear = 2000 + year
+  const cardMonth = new Date(cardYear, month - 1, 1)
+  return cardMonth <= now
+}
+
 function applyPromo() {
   if (!promoCode.value.trim() || promoApplied.value) return
   promoApplied.value = true
 }
 
-const isCardValid = computed(
-  () =>
-    card.number.replace(/\s/g, '').length >= 12 &&
-    card.name.trim().length > 0 &&
-    /^\d{2}\/\d{2}$/.test(card.expiry) &&
-    card.cvv.length >= 3,
-)
+const isCardValid = computed(() => {
+  const cardNumber = card.number.replace(/\s/g, '')
+  if (cardNumber.length < 13 || cardNumber.length > 19) return false
+  if (!luhnCheck(cardNumber)) return false
+  if (card.name.trim().length === 0) return false
+  if (!/^\d{2}\/\d{2}$/.test(card.expiry)) return false
+
+  const [month, year] = card.expiry.split('/').map(Number)
+  if (month < 1 || month > 12) return false
+  if (isCardExpired(month, year)) return false
+
+  if (card.cvv.length < 3 || card.cvv.length > 4) return false
+  return true
+})
 
 watch(
   [method, isCardValid],
@@ -61,6 +92,12 @@ watch(
   { immediate: true },
 )
 
+function clearCardData() {
+  card.number = ''
+  card.name = ''
+  card.cvv = ''
+}
+
 async function submit(): Promise<boolean> {
   submitError.value = ''
 
@@ -68,7 +105,10 @@ async function submit(): Promise<boolean> {
     return true
   }
 
-  if (!isCardValid.value) return false
+  if (!isCardValid.value) {
+    submitError.value = 'ข้อมูลบัตรเครดิตไม่ถูกต้อง'
+    return false
+  }
 
   submitting.value = true
   try {
@@ -81,9 +121,10 @@ async function submit(): Promise<boolean> {
       securityCode: card.cvv,
     })
     await createCharge(token, props.totalPrice, 'HomeServices booking')
+    clearCardData()
     return true
   } catch (error) {
-    submitError.value = error instanceof Error ? error.message : 'การชำระเงินไม่สำเร็จ'
+    submitError.value = error instanceof Error ? error.message : 'การชำระเงินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง'
     return false
   } finally {
     submitting.value = false

@@ -24,6 +24,10 @@ function getOmise() {
 }
 
 export function createCardToken(card: OmiseCardParams): Promise<string> {
+  if (!card.name || !card.number) {
+    return Promise.reject(new Error('ข้อมูลบัตรเครดิตไม่ครบถ้วน'))
+  }
+
   const omise = getOmise()
   return new Promise((resolve, reject) => {
     omise.createToken(
@@ -40,8 +44,14 @@ export function createCardToken(card: OmiseCardParams): Promise<string> {
           resolve(response.id)
           return
         }
-        const message = response.object === 'error' ? response.message : 'ไม่สามารถตรวจสอบบัตรได้'
-        reject(new Error(message))
+
+        if (response.object === 'error') {
+          const errorMsg = response.message || 'ไม่สามารถตรวจสอบบัตรได้'
+          reject(new Error(errorMsg))
+          return
+        }
+
+        reject(new Error('ไม่สามารถตรวจสอบบัตรได้'))
       },
     )
   })
