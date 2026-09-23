@@ -1,11 +1,19 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { formatBaht } from '@/data/serviceDetails'
 import type { SelectedBookingItem } from '@/composables/useBooking'
 
-defineProps<{
+const props = defineProps<{
   items: SelectedBookingItem[]
   totalPrice: number
+  scheduledDate?: string
+  scheduledTime?: string
+  address?: string
 }>()
+
+const hasAppointment = computed(() =>
+  Boolean(props.scheduledDate || props.scheduledTime || props.address),
+)
 </script>
 
 <template>
@@ -22,7 +30,22 @@ defineProps<{
       </li>
     </ul>
 
-    <div class="summary__total" :class="{ 'is-empty': items.length === 0 }">
+    <dl v-if="hasAppointment" class="summary__meta">
+      <div v-if="scheduledDate" class="summary__row">
+        <dt>วันที่</dt>
+        <dd>{{ scheduledDate }}</dd>
+      </div>
+      <div v-if="scheduledTime" class="summary__row">
+        <dt>เวลา</dt>
+        <dd>{{ scheduledTime }}</dd>
+      </div>
+      <div v-if="address" class="summary__row">
+        <dt>ที่อยู่</dt>
+        <dd class="summary__address">{{ address }}</dd>
+      </div>
+    </dl>
+
+    <div class="summary__total" :class="{ 'is-empty': items.length === 0 && !hasAppointment }">
       <span>รวม</span>
       <strong :class="{ 'summary__amount--active': items.length > 0 }">
         {{ formatBaht(totalPrice) }}
@@ -89,6 +112,27 @@ defineProps<{
 .summary__qty {
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.summary__meta {
+  margin: 0 0 1rem;
+}
+
+.summary__meta .summary__row {
+  margin-bottom: 0.5rem;
+}
+
+.summary__meta dt {
+  flex-shrink: 0;
+}
+
+.summary__meta dd {
+  margin: 0;
+  text-align: right;
+}
+
+.summary__address {
+  max-width: 12rem;
 }
 
 .summary__total {
