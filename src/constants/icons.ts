@@ -10,6 +10,13 @@ export const icons = {
     logout: '/icons/navigation/logout.svg',
     menu: '/icons/navigation/menu.svg',
   },
+  customerServices: {
+    account: '/icons/customer-services/account.svg',
+    list: '/icons/customer-services/list.svg',
+    history: '/icons/customer-services/history.svg',
+    calendar: '/icons/customer-services/calendar.svg',
+    person: '/icons/customer-services/person.svg',
+  },
   notification: {
     outline: '/icons/notification/notification-outline.svg',
     filled: '/icons/notification/notification-filled.svg',

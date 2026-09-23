@@ -364,7 +364,7 @@ onMounted(async () => {
                 <span class="sidebar-nav__text">รีเซ็ตรหัสผ่าน</span>
               </RouterLink>
 
-              <a href="#repair-orders" class="sidebar-nav__item" @click.prevent>
+              <RouterLink class="sidebar-nav__item" :to="{ name: 'user-orders' }">
                 <span class="sidebar-nav__icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 5H7C6.46957 5 5.96086 5.21071 5.58579 5.58579C5.21071 5.96086 5 6.46957 5 7V19C5 19.5304 5.21071 20.0391 5.58579 20.4142C5.96086 20.7893 6.46957 21 7 21H17C17.5304 21 18.0391 20.7893 18.4142 20.4142C18.7893 20.0391 19 19.5304 19 19V7C19 6.46957 18.7893 5.96086 18.4142 5.58579C18.0391 5.21071 17.5304 5 17 5H15" />
@@ -374,9 +374,9 @@ onMounted(async () => {
                   </svg>
                 </span>
                 <span class="sidebar-nav__text">รายการคำสั่งซ่อม</span>
-              </a>
+              </RouterLink>
 
-              <a href="#repair-history" class="sidebar-nav__item" @click.prevent>
+              <RouterLink class="sidebar-nav__item" :to="{ name: 'user-history' }">
                 <span class="sidebar-nav__icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10" />
@@ -384,7 +384,7 @@ onMounted(async () => {
                   </svg>
                 </span>
                 <span class="sidebar-nav__text">ประวัติการซ่อม</span>
-              </a>
+              </RouterLink>
             </nav>
           </div>
         </aside>
