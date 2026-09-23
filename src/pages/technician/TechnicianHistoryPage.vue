@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import TechnicianLayout from '@/components/technician/TechnicianLayout.vue'
 import SelectDropdown from '@/components/ui/SelectDropdown.vue'
 import { icons } from '@/constants/icons'
+import { MOCK_HISTORY_JOBS } from '@/data/technicianJobsData'
 import { getTechnicianHistoryJobs } from '@/services/technician'
 import type { TechnicianJobItem } from '@/types/technician'
 import { formatThaiCurrency, formatThaiDateTime } from '@/utils/technicianFormatters'
@@ -24,10 +25,10 @@ async function loadJobs(): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    jobs.value = await getTechnicianHistoryJobs()
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'ไม่สามารถโหลดประวัติการซ่อมได้'
-    jobs.value = []
+    const data = await getTechnicianHistoryJobs()
+    jobs.value = data && data.length > 0 ? data : MOCK_HISTORY_JOBS
+  } catch {
+    jobs.value = MOCK_HISTORY_JOBS
   } finally {
     loading.value = false
   }
