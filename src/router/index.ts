@@ -21,6 +21,12 @@ const router = createRouter({
       component: () => import('@/pages/ServiceDetailPage.vue'),
     },
     {
+      path: '/service/:id/info',
+      name: 'service-booking-info',
+      component: () => import('@/pages/ServiceBookingInfoPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/pages/LoginPage.vue'),
