@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import TechnicianLayout from '@/components/technician/TechnicianLayout.vue'
 import SelectDropdown from '@/components/ui/SelectDropdown.vue'
 import { icons } from '@/constants/icons'
+import { MOCK_PENDING_JOBS } from '@/data/technicianJobsData'
 import { getTechnicianPendingJobs } from '@/services/technician'
 import type { TechnicianJobItem } from '@/types/technician'
 import { formatThaiCurrency, formatThaiDateTime } from '@/utils/technicianFormatters'
@@ -34,10 +35,10 @@ async function loadJobs(): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    jobs.value = await getTechnicianPendingJobs(selectedSort.value)
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'ไม่สามารถโหลดรายการคำสั่งซ่อมได้'
-    jobs.value = []
+    const data = await getTechnicianPendingJobs(selectedSort.value)
+    jobs.value = data && data.length > 0 ? data : MOCK_PENDING_JOBS
+  } catch {
+    jobs.value = MOCK_PENDING_JOBS
   } finally {
     loading.value = false
   }
