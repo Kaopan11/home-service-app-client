@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BookingInfoForm from '@/components/booking/BookingInfoForm.vue'
 import BookingLayout from '@/components/booking/BookingLayout.vue'
+import BookingPayment from '@/components/booking/BookingPayment.vue'
 import BookingSummary from '@/components/booking/BookingSummary.vue'
 import { formatAddressSummary } from '@/services/userService'
 import { useBookingStore, type BookingCustomerInfo } from '@/stores/booking'
@@ -15,7 +16,13 @@ const profileStore = useProfileStore()
 
 const serviceId = computed(() => String(route.params.id))
 const ready = ref(false)
-const paymentNotice = ref('')
+const step = ref<2 | 3>(2)
+
+const paymentMethod = ref<'promptpay' | 'card'>('card')
+const paymentValid = ref(false)
+const paymentConfirmed = ref(false)
+const paymentRef = ref<InstanceType<typeof BookingPayment> | null>(null)
+const submittingPayment = computed(() => paymentRef.value?.submitting ?? false)
 
 const customer = ref<BookingCustomerInfo>({
   date: null,
@@ -61,7 +68,7 @@ const formattedAddress = computed(() =>
   }),
 )
 
-const canContinue = computed(
+const infoComplete = computed(
   () =>
     Boolean(customer.value.date) &&
     Boolean(customer.value.time) &&
@@ -70,6 +77,15 @@ const canContinue = computed(
     Boolean(customer.value.district) &&
     Boolean(customer.value.subdistrict),
 )
+
+const canContinue = computed(() =>
+  step.value === 3 ? paymentValid.value && !submittingPayment.value : infoComplete.value,
+)
+
+const nextLabel = computed(() => {
+  if (step.value === 2) return 'ดำเนินการต่อ'
+  return submittingPayment.value ? 'กำลังชำระเงิน...' : 'ยืนยันการชำระเงิน'
+})
 
 function applyDraft(): boolean {
   if (!bookingStore.matchesService(serviceId.value) || !bookingStore.draft) {
@@ -122,14 +138,26 @@ onMounted(async () => {
 })
 
 function goBack(): void {
+  if (step.value === 3) {
+    step.value = 2
+    return
+  }
   void router.push({ name: 'service-detail', params: { id: serviceId.value } })
 }
 
-function goNext(): void {
-  paymentNotice.value = ''
-  if (!validate()) return
-  bookingStore.updateCustomer(customer.value)
-  paymentNotice.value = 'ขั้นตอนชำระเงินจะพร้อมใช้งานในรอบถัดไป'
+async function goNext(): Promise<void> {
+  if (step.value === 2) {
+    if (!validate()) return
+    bookingStore.updateCustomer(customer.value)
+    step.value = 3
+    return
+  }
+  if (!canContinue.value) return
+  const ok = await paymentRef.value?.submit()
+  if (ok) {
+    paymentConfirmed.value = true
+    bookingStore.clear()
+  }
 }
 </script>
 
@@ -138,13 +166,40 @@ function goNext(): void {
     <p>กำลังโหลดข้อมูลการจอง...</p>
   </section>
 
+  <section v-else-if="paymentConfirmed" class="confirmed">
+    <img
+      class="confirmed__icon"
+      src="/icons/action/check-circle-filled.svg"
+      alt=""
+      width="64"
+      height="64"
+    />
+    <h1 class="confirmed__title">ชำระเงินสำเร็จ</h1>
+    <p class="confirmed__text">
+      ขอบคุณที่ใช้บริการ HomeServices ทีมงานจะติดต่อกลับเพื่อยืนยันนัดหมาย
+    </p>
+    <RouterLink class="btn btn--primary" :to="{ name: 'home' }">กลับสู่หน้าหลัก</RouterLink>
+  </section>
+
   <BookingLayout
     v-else-if="draft"
     :image="draft.serviceImage"
     :title="draft.serviceTitle"
-    :current-step="2"
+    :current-step="step"
   >
-    <BookingInfoForm v-model="customer" :errors="errors" @clear-error="clearError" />
+    <BookingInfoForm
+      v-if="step === 2"
+      v-model="customer"
+      :errors="errors"
+      @clear-error="clearError"
+    />
+    <BookingPayment
+      v-else
+      ref="paymentRef"
+      v-model:method="paymentMethod"
+      v-model:valid="paymentValid"
+      :total-price="draft.totalPrice"
+    />
 
     <template #summary>
       <BookingSummary
@@ -161,13 +216,10 @@ function goNext(): void {
         <span aria-hidden="true">‹</span>
         ย้อนกลับ
       </button>
-      <div class="booking-next">
-        <p v-if="paymentNotice" class="booking-next__hint">{{ paymentNotice }}</p>
-        <button class="btn btn--primary" type="button" :disabled="!canContinue" @click="goNext">
-          ดำเนินการต่อ
-          <span aria-hidden="true">›</span>
-        </button>
-      </div>
+      <button class="btn btn--primary" type="button" :disabled="!canContinue" @click="goNext">
+        {{ nextLabel }}
+        <span aria-hidden="true">›</span>
+      </button>
     </template>
   </BookingLayout>
 </template>
@@ -182,18 +234,25 @@ function goNext(): void {
   color: var(--gray-700);
 }
 
-.booking-next {
+.confirmed {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 6rem 1.5rem;
+  text-align: center;
 }
 
-.booking-next__hint {
-  margin: 0;
-  max-width: 16rem;
-  text-align: right;
-  font-size: var(--body-3-size);
+.confirmed__title {
+  font-size: var(--headline-2-size);
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-950);
+}
+
+.confirmed__text {
+  margin-bottom: 0.75rem;
   color: var(--gray-600);
 }
 </style>
