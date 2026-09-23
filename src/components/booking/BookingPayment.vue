@@ -27,7 +27,7 @@ const submitting = ref(false)
 const submitError = ref('')
 
 function formatCardNumber(event: Event) {
-  const digits = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 16)
+  const digits = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 19)
   card.number = digits.replace(/(.{4})/g, '$1 ').trim()
 }
 
@@ -59,9 +59,9 @@ function luhnCheck(num: string): boolean {
 
 function isCardExpired(month: number, year: number): boolean {
   const now = new Date()
-  const cardYear = 2000 + year
-  const cardMonth = new Date(cardYear, month - 1, 1)
-  return cardMonth <= now
+  // Cards stay valid through the end of the expiry month.
+  const firstDayAfterExpiry = new Date(2000 + year, month, 1)
+  return firstDayAfterExpiry <= now
 }
 
 function applyPromo() {
@@ -87,7 +87,8 @@ const isCardValid = computed(() => {
 watch(
   [method, isCardValid],
   ([currentMethod, cardValid]) => {
-    valid.value = currentMethod === 'promptpay' ? true : cardValid
+    // PromptPay is not wired to a real payment flow yet, so it can never be submitted.
+    valid.value = currentMethod === 'card' && cardValid
   },
   { immediate: true },
 )
@@ -95,6 +96,7 @@ watch(
 function clearCardData() {
   card.number = ''
   card.name = ''
+  card.expiry = ''
   card.cvv = ''
 }
 
@@ -102,7 +104,8 @@ async function submit(): Promise<boolean> {
   submitError.value = ''
 
   if (method.value === 'promptpay') {
-    return true
+    submitError.value = 'ยังไม่เปิดให้ชำระเงินผ่านพร้อมเพย์ กรุณาใช้บัตรเครดิต'
+    return false
   }
 
   if (!isCardValid.value) {
@@ -120,7 +123,11 @@ async function submit(): Promise<boolean> {
       expirationYear: 2000 + Number(expiryYear),
       securityCode: card.cvv,
     })
-    await createCharge(token, props.totalPrice, 'HomeServices booking')
+    const charge = await createCharge(token, props.totalPrice, 'HomeServices booking')
+    if (!charge.paid || charge.status !== 'successful') {
+      submitError.value = 'การชำระเงินไม่สำเร็จ กรุณาตรวจสอบบัตรหรือลองใหม่อีกครั้ง'
+      return false
+    }
     clearCardData()
     return true
   } catch (error) {
@@ -140,9 +147,9 @@ defineExpose({ submit, submitting })
 
     <div class="payment__methods" role="radiogroup" aria-label="วิธีการชำระเงิน">
       <label class="select-box">
-        <input v-model="method" type="radio" name="payment-method" value="promptpay" />
+        <input v-model="method" type="radio" name="payment-method" value="promptpay" disabled />
         <span class="icon icon--qr" aria-hidden="true"></span>
-        พร้อมเพย์
+        พร้อมเพย์ (เร็วๆ นี้)
       </label>
       <label class="select-box">
         <input v-model="method" type="radio" name="payment-method" value="card" />
@@ -159,7 +166,7 @@ defineExpose({ submit, submitting })
           type="text"
           inputmode="numeric"
           autocomplete="cc-number"
-          maxlength="19"
+          maxlength="23"
           placeholder="กรุณากรอกหมายเลขบัตร"
           :disabled="submitting"
           @input="formatCardNumber"
