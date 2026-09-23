@@ -21,13 +21,20 @@ export async function createCharge(
   if (!token || typeof token !== 'string') {
     throw new Error('ไม่สามารถตรวจสอบบัตรได้ กรุณาลองใหม่อีกครั้ง')
   }
-  if (amountBaht <= 0) {
-    throw new Error('จำนวนเงินต้องมากกว่า 0')
+
+  if (typeof amountBaht !== 'number' || !isFinite(amountBaht)) {
+    throw new Error('จำนวนเงินไม่ถูกต้อง')
   }
+
+  if (amountBaht < 1) {
+    throw new Error('จำนวนเงินต้องไม่ต่ำกว่า 1 บาท')
+  }
+
+  const amount = Math.round(amountBaht * 100) / 100
 
   const response = await apiFetch<ChargeApiResponse>('/api/charges', {
     method: 'POST',
-    body: JSON.stringify({ token, amount: amountBaht, description }),
+    body: JSON.stringify({ token, amount, description }),
   })
 
   if (!response || !response.data) {
