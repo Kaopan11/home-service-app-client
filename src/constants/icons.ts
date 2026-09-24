@@ -49,4 +49,8 @@ export const icons = {
     primary: '/icons/loading/spinner-primary.svg',
     secondary: '/icons/loading/spinner-secondary.svg',
   },
+  technician: {
+    location: '/icons/technicianPage/location.svg',
+    work: '/icons/technicianPage/work.svg',
+  },
 } as const

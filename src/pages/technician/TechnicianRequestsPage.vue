@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import AcceptJobConfirmation from '@/components/technician/AcceptJobConfirmation.vue'
 import TechnicianLayout from '@/components/technician/TechnicianLayout.vue'
 import {
   acceptRequest,
@@ -7,18 +8,24 @@ import {
   getTechnicianProfile,
   listWaitingRequests,
   refreshTechnicianLocation,
+  updateTechnicianProfile,
 } from '@/services/technician'
+import { icons } from '@/constants/icons'
 import { useTechnicianJobsStore } from '@/stores/technicianJobs'
 import { isApiError } from '@/types/auth'
-import type { TechnicianRequest } from '@/types/technician'
+import type { TechnicianProfile, TechnicianRequest } from '@/types/technician'
 
 const jobsStore = useTechnicianJobsStore()
 
 const loading = ref(true)
 const refreshing = ref(false)
+const enabling = ref(false)
 const actingId = ref<number | null>(null)
+const pendingAccept = ref<TechnicianRequest | null>(null)
 const error = ref('')
 const address = ref('')
+const available = ref(true)
+const profile = ref<TechnicianProfile | null>(null)
 const requests = ref<TechnicianRequest[]>([])
 
 onMounted(loadPage)
@@ -27,14 +34,56 @@ async function loadPage(): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    const [profile, items] = await Promise.all([getTechnicianProfile(), listWaitingRequests()])
-    address.value = profile.address ?? ''
+    const nextProfile = await getTechnicianProfile()
+    profile.value = nextProfile
+    address.value = nextProfile.address ?? ''
+    available.value = nextProfile.available
+    if (!nextProfile.available) {
+      requests.value = []
+      jobsStore.setPendingCount(0)
+      return
+    }
+    const items = await listWaitingRequests()
     requests.value = items
     jobsStore.setPendingCount(items.length)
   } catch (err) {
     error.value = isApiError(err) ? err.message : 'ไม่สามารถโหลดคำขอบริการซ่อมได้'
   } finally {
     loading.value = false
+  }
+}
+
+async function enableAvailability(): Promise<void> {
+  const current = profile.value
+  if (!current || enabling.value) {
+    return
+  }
+
+  enabling.value = true
+  error.value = ''
+  try {
+    const updated = await updateTechnicianProfile({
+      firstName: current.firstName ?? '',
+      lastName: current.lastName ?? '',
+      phone: current.phone ?? '',
+      address: current.address ?? '',
+      latitude: current.latitude,
+      longitude: current.longitude,
+      available: true,
+      serviceIds: [...current.acceptedServiceIds],
+    })
+    profile.value = updated
+    available.value = updated.available
+    address.value = updated.address ?? ''
+    if (updated.available) {
+      const items = await listWaitingRequests()
+      requests.value = items
+      jobsStore.setPendingCount(items.length)
+    }
+  } catch (err) {
+    error.value = isApiError(err) ? err.message : 'ไม่สามารถเปลี่ยนสถานะได้'
+  } finally {
+    enabling.value = false
   }
 }
 
@@ -70,16 +119,32 @@ function refreshLocation(): void {
   )
 }
 
-async function handleAccept(id: number): Promise<void> {
+function openAcceptModal(request: TechnicianRequest): void {
   if (actingId.value !== null) {
     return
   }
-  actingId.value = id
+  pendingAccept.value = request
+}
+
+function closeAcceptModal(): void {
+  if (actingId.value !== null) {
+    return
+  }
+  pendingAccept.value = null
+}
+
+async function confirmAccept(): Promise<void> {
+  const request = pendingAccept.value
+  if (!request || actingId.value !== null) {
+    return
+  }
+  actingId.value = request.id
   error.value = ''
   try {
-    await acceptRequest(id)
-    requests.value = requests.value.filter((item) => item.id !== id)
+    await acceptRequest(request.id)
+    requests.value = requests.value.filter((item) => item.id !== request.id)
     jobsStore.setPendingCount(requests.value.length)
+    pendingAccept.value = null
   } catch (err) {
     error.value = isApiError(err) ? err.message : 'ไม่สามารถรับงานได้'
   } finally {
@@ -135,21 +200,25 @@ function mapHref(request: TechnicianRequest): string {
       <h1 class="page-title">คำขอบริการซ่อม</h1>
     </template>
 
-    <p v-if="error" class="banner banner--error" role="alert">{{ error }}</p>
-    <p v-if="loading" class="banner">กำลังโหลดคำขอบริการซ่อม...</p>
+    <section v-if="!loading && !available" class="unavailable">
+      <span class="unavailable__bell" aria-hidden="true"></span>
+      <h2>ต้องการรับแจ้งเตือนคำขอบริการสั่งซ่อม?</h2>
+      <p>เปิดใช้งานสถานะพร้อมให้บริการเพื่อแสดงรายการและรับงานซ่อมในบริเวณตำแหน่งที่คุณอยู่</p>
+      <p v-if="error" class="unavailable__error" role="alert">{{ error }}</p>
+      <button type="button" class="btn btn--primary" :disabled="enabling" @click="enableAvailability">
+        {{ enabling ? 'กำลังเปลี่ยนสถานะ...' : 'เปลี่ยนสถานะเป็นพร้อมให้บริการ' }}
+      </button>
+    </section>
 
-    <div class="requests">
+    <div v-else class="requests">
       <section class="location" aria-label="ตำแหน่งที่อยู่ปัจจุบัน">
-        <span class="location__pin" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
-            <path
-              d="M12 21s6.5-5.33 6.5-10.2A6.5 6.5 0 0 0 12 4.3a6.5 6.5 0 0 0-6.5 6.5C5.5 15.67 12 21 12 21Z"
-              stroke="currentColor"
-              stroke-width="1.6"
-            />
-            <circle cx="12" cy="10.6" r="2.2" stroke="currentColor" stroke-width="1.6" />
-          </svg>
-        </span>
+        <img
+          class="location__pin"
+          :src="icons.technician.location"
+          width="27"
+          height="34"
+          alt=""
+        />
         <div class="location__copy">
           <p class="location__label">ตำแหน่งที่อยู่ปัจจุบัน</p>
           <p class="location__address">{{ address || 'ยังไม่ได้ระบุตำแหน่ง' }}</p>
@@ -164,18 +233,20 @@ function mapHref(request: TechnicianRequest): string {
         </button>
       </section>
 
-      <p v-if="!loading && !requests.length" class="empty">ยังไม่มีคำขอบริการซ่อม</p>
+      <p v-if="error" class="empty empty--error" role="alert">{{ error }}</p>
+      <p v-if="loading || refreshing" class="empty">กำลังโหลดคำขอบริการซ่อม...</p>
+      <p v-else-if="!requests.length" class="empty">ยังไม่มีคำขอบริการซ่อม</p>
 
-      <article v-for="request in requests" :key="request.id" class="card">
-        <header class="card__head">
+      <article v-for="request in requests" :key="request.id" class="request">
+        <header class="request__head">
           <h2>{{ request.serviceName }}</h2>
-          <p class="card__when">
+          <p class="request__when">
             <span>วันเวลาดำเนินการ</span>
             {{ formatWhen(request.createdAt) }}
           </p>
         </header>
 
-        <div class="card__body">
+        <div class="request__body">
           <dl class="meta">
             <div>
               <dt>รายการ</dt>
@@ -194,21 +265,14 @@ function mapHref(request: TechnicianRequest): string {
               <dd>
                 <span>{{ request.address }}</span>
                 <a class="map-link" :href="mapHref(request)" target="_blank" rel="noopener noreferrer">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
-                    <path
-                      d="M12 21s6-4.9 6-9.4A6 6 0 0 0 6 11.6C6 16.1 12 21 12 21Z"
-                      stroke="currentColor"
-                      stroke-width="1.6"
-                    />
-                    <circle cx="12" cy="11.4" r="1.8" stroke="currentColor" stroke-width="1.6" />
-                  </svg>
+                  <img :src="icons.technician.location" width="14" height="18" alt="" />
                   ดูแผนที่
                 </a>
               </dd>
             </div>
           </dl>
 
-          <div class="card__actions">
+          <div class="request__actions">
             <button
               type="button"
               class="btn btn--secondary"
@@ -221,14 +285,23 @@ function mapHref(request: TechnicianRequest): string {
               type="button"
               class="btn btn--primary"
               :disabled="actingId !== null"
-              @click="handleAccept(request.id)"
+              @click="openAcceptModal(request)"
             >
-              {{ actingId === request.id ? 'กำลังดำเนินการ...' : 'รับงาน' }}
+              รับงาน
             </button>
           </div>
         </div>
       </article>
     </div>
+
+    <AcceptJobConfirmation
+      :open="Boolean(pendingAccept)"
+      :service-name="pendingAccept?.serviceName ?? ''"
+      :scheduled-at="pendingAccept?.createdAt ?? ''"
+      :loading="actingId !== null"
+      @confirm="confirmAccept"
+      @cancel="closeAcceptModal"
+    />
   </TechnicianLayout>
 </template>
 
@@ -240,13 +313,56 @@ function mapHref(request: TechnicianRequest): string {
   font-weight: var(--font-weight-medium);
 }
 
-.banner {
-  margin: 0 0 16px;
-  color: var(--gray-700);
+.unavailable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 48px 24px 40px;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  background: var(--white);
+  text-align: center;
 }
 
-.banner--error {
+.unavailable__bell {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  background-color: var(--blue-600);
+  -webkit-mask: url('/icons/notification/notification-filled.svg') center / contain no-repeat;
+  mask: url('/icons/notification/notification-filled.svg') center / contain no-repeat;
+}
+
+.unavailable h2 {
+  margin: 0;
+  color: var(--gray-950);
+  font-size: 20px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.5;
+}
+
+.unavailable p {
+  margin: 0;
+  max-width: 720px;
+  color: var(--gray-600);
+  font-size: 16px;
+  font-weight: var(--font-weight-regular);
+  line-height: 1.5;
+}
+
+.unavailable .unavailable__error {
   color: var(--red);
+}
+
+.unavailable .btn {
+  width: auto;
+  min-width: 240px;
+  height: 44px;
+  margin-top: 16px;
+  padding: 0 24px;
 }
 
 .requests {
@@ -254,7 +370,6 @@ function mapHref(request: TechnicianRequest): string {
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  max-width: 1120px;
 }
 
 .location {
@@ -268,12 +383,8 @@ function mapHref(request: TechnicianRequest): string {
 }
 
 .location__pin {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  color: var(--blue-600);
+  width: 27px;
+  height: 34px;
   flex-shrink: 0;
 }
 
@@ -298,10 +409,14 @@ function mapHref(request: TechnicianRequest): string {
   line-height: 1.5;
 }
 
-.location__refresh {
+.location__refresh,
+.location__refresh:hover:not(:disabled),
+.location__refresh:active:not(:disabled),
+.location__refresh:disabled {
   width: 112px;
   height: 44px;
   flex-shrink: 0;
+  background: var(--blue-100);
 }
 
 .empty {
@@ -309,14 +424,22 @@ function mapHref(request: TechnicianRequest): string {
   color: var(--gray-700);
 }
 
-.card {
+.empty--error {
+  margin-bottom: 0;
+  color: var(--red);
+}
+
+.request {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
   padding: 24px;
   border: 1px solid var(--gray-300);
   border-radius: 8px;
   background: var(--white);
 }
 
-.card__head {
+.request__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -324,7 +447,7 @@ function mapHref(request: TechnicianRequest): string {
   margin-bottom: 20px;
 }
 
-.card__head h2 {
+.request__head h2 {
   margin: 0;
   color: var(--gray-950);
   font-size: 20px;
@@ -332,7 +455,7 @@ function mapHref(request: TechnicianRequest): string {
   line-height: 1.5;
 }
 
-.card__when {
+.request__when {
   margin: 0;
   color: var(--gray-950);
   font-size: 16px;
@@ -340,12 +463,12 @@ function mapHref(request: TechnicianRequest): string {
   white-space: nowrap;
 }
 
-.card__when span {
+.request__when span {
   margin-right: 12px;
   color: var(--gray-700);
 }
 
-.card__body {
+.request__body {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -397,31 +520,37 @@ function mapHref(request: TechnicianRequest): string {
   white-space: nowrap;
 }
 
+.map-link img {
+  width: 14px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
 .map-link:hover {
   color: var(--blue-700);
 }
 
-.card__actions {
+.request__actions {
   display: flex;
   align-items: center;
   gap: 16px;
   flex-shrink: 0;
 }
 
-.card__actions .btn {
+.request__actions .btn {
   width: 112px;
   height: 44px;
 }
 
 @media (max-width: 900px) {
   .location,
-  .card__head,
-  .card__body {
+  .request__head,
+  .request__body {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .card__when {
+  .request__when {
     white-space: normal;
   }
 
@@ -430,7 +559,7 @@ function mapHref(request: TechnicianRequest): string {
     gap: 2px;
   }
 
-  .card__actions {
+  .request__actions {
     justify-content: flex-end;
   }
 }
