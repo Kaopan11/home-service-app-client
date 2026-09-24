@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import PasswordVisibilityToggle from '@/components/auth/PasswordVisibilityToggle.vue'
-import TheHeader from '@/components/layout/TheHeader.vue'
+import CustomerAccountLayout from '@/components/layout/CustomerAccountLayout.vue'
 import { changePassword, validateChangePassword } from '@/services/passwordApi'
 import { isApiError } from '@/types/auth'
 import type { ChangePasswordInput, PasswordField } from '@/types/password'
@@ -76,154 +76,41 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <div class="page">
-    <TheHeader />
-    <div class="banner">รีเซ็ตรหัสผ่าน</div>
-    <main class="container">
-      <div class="layout">
-        <aside class="sidebar" aria-label="เมนูบัญชีผู้ใช้">
-          <h2>บัญชีผู้ใช้</h2>
-          <nav>
-            <RouterLink :to="{ name: 'user-profile' }">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <path d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
-                <path d="M5 21a7 7 0 0 1 14 0" />
-              </svg>
-              ข้อมูลผู้ใช้งาน
-            </RouterLink>
-            <RouterLink class="active" :to="{ name: 'profile-password' }" aria-current="page">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <rect x="4" y="11" width="16" height="10" rx="2" />
-                <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-              </svg>
-              รีเซ็ตรหัสผ่าน
-            </RouterLink>
-            <a href="#repair-orders" @click.prevent>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <path d="M8 4h8v3H8z" />
-                <path d="M7 7h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" />
-                <path d="M9 13h6M9 17h4" />
-              </svg>
-              รายการคำสั่งซ่อม
-            </a>
-            <a href="#repair-history" @click.prevent>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                <circle cx="12" cy="12" r="8" />
-                <path d="M12 8v5l3 2" />
-              </svg>
-              ประวัติการซ่อม
-            </a>
-          </nav>
-        </aside>
+  <CustomerAccountLayout>
+    <template #banner>
+      <h1>รีเซ็ตรหัสผ่าน</h1>
+    </template>
 
-        <section class="sheet">
-          <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
-          <form @submit.prevent="handleSubmit">
-            <div v-for="field in fields" :key="field.key" class="row">
-              <label :for="field.key">{{ field.label }}<span>*</span></label>
-              <div class="control">
-                <input
-                  :id="field.key"
-                  v-model="form[field.key]"
-                  :type="visible[field.key] ? 'text' : 'password'"
-                  :name="field.key"
-                  :autocomplete="field.autocomplete"
-                />
-                <PasswordVisibilityToggle
-                  :visible="visible[field.key]"
-                  @toggle="visible[field.key] = !visible[field.key]"
-                />
-                <p v-if="fieldErrors[field.key]" class="field-error">{{ fieldErrors[field.key] }}</p>
-              </div>
-            </div>
-            <div class="actions">
-              <button type="submit" :disabled="submitting">{{ submitting ? 'กำลังบันทึก...' : 'บันทึก' }}</button>
-            </div>
-          </form>
-        </section>
-      </div>
-    </main>
+    <section class="sheet">
+      <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
+      <form @submit.prevent="handleSubmit">
+        <div v-for="field in fields" :key="field.key" class="row">
+          <label :for="field.key">{{ field.label }}<span>*</span></label>
+          <div class="control">
+            <input
+              :id="field.key"
+              v-model="form[field.key]"
+              :type="visible[field.key] ? 'text' : 'password'"
+              :name="field.key"
+              :autocomplete="field.autocomplete"
+            />
+            <PasswordVisibilityToggle
+              :visible="visible[field.key]"
+              @toggle="visible[field.key] = !visible[field.key]"
+            />
+            <p v-if="fieldErrors[field.key]" class="field-error">{{ fieldErrors[field.key] }}</p>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit" :disabled="submitting">{{ submitting ? 'กำลังบันทึก...' : 'บันทึก' }}</button>
+        </div>
+      </form>
+    </section>
     <div v-if="successMessage" class="toast" role="status">{{ successMessage }}</div>
-  </div>
+  </CustomerAccountLayout>
 </template>
 
 <style scoped>
-.page {
-  min-height: 100svh;
-  background: #f3f4f6;
-}
-
-.banner {
-  background: #3366ff;
-  color: #fff;
-  text-align: center;
-  font-size: 28px;
-  font-weight: 500;
-  line-height: 1.4;
-  padding: 36px 16px;
-}
-
-.container {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 40px 48px 80px;
-}
-
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 24px;
-  width: 100%;
-}
-
-.sidebar {
-  background: #fff;
-  border: 1px solid #e6e7eb;
-  border-radius: 12px;
-  padding: 20px 12px;
-  box-shadow: 0 1px 2px rgb(23 51 106 / 0.04);
-}
-
-.sidebar h2 {
-  margin: 0 0 8px;
-  padding: 0 12px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #646c80;
-}
-
-.sidebar nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sidebar a {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 44px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  color: #4b5160;
-  text-decoration: none;
-}
-
-.sidebar a svg {
-  flex-shrink: 0;
-  color: #9aa1b0;
-}
-
-.sidebar a.active {
-  background: #e8f1ff;
-  color: #3366ff;
-  font-weight: 500;
-}
-
-.sidebar a.active svg {
-  color: #3366ff;
-}
-
 .sheet {
   min-width: 0;
   width: 100%;
@@ -324,13 +211,6 @@ async function handleSubmit(): Promise<void> {
 .actions button:disabled {
   cursor: not-allowed;
   opacity: 0.7;
-}
-
-@media (min-width: 801px) {
-  .layout {
-    grid-template-columns: 250px minmax(0, 1fr);
-    align-items: start;
-  }
 }
 
 @media (max-width: 800px) {
