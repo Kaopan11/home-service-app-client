@@ -28,7 +28,7 @@ async function handleLogout(): Promise<void> {
 <template>
   <div class="tech-shell">
     <aside class="tech-sidebar">
-      <RouterLink class="tech-sidebar__brand" :to="{ name: 'technician-account' }">
+      <RouterLink class="tech-sidebar__brand" :to="{ name: 'technician-requests' }">
         <img class="tech-sidebar__logo" :src="icons.admin.house" width="32" height="32" alt="" />
         <span>HomeServices</span>
       </RouterLink>
@@ -55,7 +55,7 @@ async function handleLogout(): Promise<void> {
           :to="{ name: 'technician-jobs' }"
         >
           <img :src="icons.navigation.list" width="24" height="24" alt="" />
-          <span>รายการคำสั่งซ่อม</span>
+          <span>รายการที่รอดำเนินการ</span>
         </RouterLink>
         <RouterLink
           class="tech-sidebar__link"

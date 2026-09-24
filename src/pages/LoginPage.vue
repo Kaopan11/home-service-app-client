@@ -28,7 +28,7 @@ async function handleSubmit(): Promise<void> {
       password: form.password,
     })
     if (nextUser.role === 'TECHNICIAN') {
-      await router.push({ name: 'technician-account' })
+      await router.push({ name: 'technician-requests' })
       return
     }
     const redirect = route.query.redirect
