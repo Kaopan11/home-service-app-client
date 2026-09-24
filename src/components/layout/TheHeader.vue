@@ -11,8 +11,7 @@ const props = defineProps<{
   isLoggedIn?: boolean
 }>()
 
-const FALLBACK_AVATAR =
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&h=80&q=80'
+const STOCK_AVATAR = 'photo-1544005313-94ddf0286df2'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -76,8 +75,12 @@ const userName = computed(() => {
 })
 
 const avatarUrl = computed(() => {
-  return localProfile.value?.avatarUrl || user.value?.avatarUrl || FALLBACK_AVATAR
+  const url = localProfile.value?.avatarUrl || user.value?.avatarUrl || ''
+  if (!url || url.includes(STOCK_AVATAR)) return ''
+  return url
 })
+
+const userInitial = computed(() => userName.value.trim().charAt(0).toUpperCase() || '?')
 </script>
 
 <template>
@@ -120,7 +123,8 @@ const avatarUrl = computed(() => {
               @click.stop="menuOpen = !menuOpen"
             >
               <span class="header__user text-body-3">{{ userName }}</span>
-              <img class="header__avatar" :src="avatarUrl" :alt="userName" />
+              <img v-if="avatarUrl" class="header__avatar" :src="avatarUrl" :alt="userName" />
+              <span v-else class="header__avatar header__avatar--initial" aria-hidden="true">{{ userInitial }}</span>
             </button>
             <nav v-show="menuOpen" class="header__dropdown" aria-label="เมนูบัญชี">
               <ul>
@@ -137,7 +141,7 @@ const avatarUrl = computed(() => {
                 <li>
                   <RouterLink
                     class="header__dropdown-item"
-                    :to="{ name: 'user-profile' }"
+                    :to="{ name: 'user-orders' }"
                     @click="menuOpen = false"
                   >
                     <img :src="icons.navigation.list" width="16" height="16" alt="" />
@@ -147,7 +151,7 @@ const avatarUrl = computed(() => {
                 <li>
                   <RouterLink
                     class="header__dropdown-item"
-                    :to="{ name: 'user-profile' }"
+                    :to="{ name: 'user-history' }"
                     @click="menuOpen = false"
                   >
                     <img :src="icons.navigation.history" width="16" height="16" alt="" />
@@ -358,6 +362,18 @@ const avatarUrl = computed(() => {
   height: 2.5rem;
   border-radius: 9999px;
   object-fit: cover;
+}
+
+.header__avatar--initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--blue-100);
+  color: var(--blue-600);
+  font-family: var(--font-family);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
 @media (max-width: 768px) {

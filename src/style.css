@@ -221,12 +221,28 @@ body {
   color: var(--gray-900);
 }
 
+.status--progress {
+  background: var(--yellow-100);
+  color: var(--yellow-900);
+}
+
+.status--done {
+  background: var(--green-100);
+  color: var(--green-900);
+}
+
 .card-order {
   box-sizing: border-box;
-  display: flex;
-  justify-content: space-between;
-  align-items: stretch;
-  gap: 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'title  status'
+    'date   price'
+    'staff  price'
+    'items  action';
+  column-gap: 24px;
+  row-gap: 6px;
+  align-items: start;
   min-height: 206px;
   padding: 22px 24px 24px;
   background: var(--card-bg);
@@ -234,28 +250,48 @@ body {
   border-radius: var(--radius);
 }
 
-.card-order > div {
-  display: flex;
-  flex-direction: column;
-}
-
-.card-order > div:first-child {
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.card-order > div:last-child {
-  align-items: flex-end;
-  gap: 16px;
-}
-
-.card-order h2 {
+.card-order__title {
+  grid-area: title;
   margin-bottom: 6px;
   color: var(--black);
 }
 
-.card-order p,
-.card-order li {
+.card-order__status {
+  grid-area: status;
+  justify-self: end;
+}
+
+.card-order__date {
+  grid-area: date;
+}
+
+.card-order__staff {
+  grid-area: staff;
+}
+
+.card-order__price {
+  grid-area: price;
+  justify-self: end;
+  align-self: center;
+  gap: 20px;
+}
+
+.card-order__items {
+  grid-area: items;
+}
+
+.card-order__action {
+  grid-area: action;
+  justify-self: end;
+  align-self: end;
+  width: 136px;
+  height: 44px;
+  padding: 10px 24px;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--headline-5-size);
+}
+
+.card-order p {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -264,14 +300,12 @@ body {
   color: var(--gray-700);
 }
 
-.card-order > div:last-child p:last-of-type {
-  gap: 20px;
-}
-
 .card-order .icon {
   width: 20px;
   height: 20px;
-  color: var(--gray-300);
+  background: none;
+  -webkit-mask: none;
+  mask: none;
 }
 
 .card-order h3 {
@@ -284,9 +318,13 @@ body {
 .card-order ul {
   margin: 0;
   padding-left: 1.25rem;
+  list-style: disc;
 }
 
 .card-order li {
+  display: list-item;
+  font-size: var(--body-3-size);
+  line-height: var(--line-height);
   color: var(--black);
 }
 
@@ -296,8 +334,66 @@ body {
   color: var(--gray-950);
 }
 
-.card-order .btn {
-  margin-top: auto;
+@media (max-width: 768px) {
+  .card-order {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'title'
+      'status'
+      'date'
+      'staff'
+      'price'
+      'items'
+      'action';
+    min-height: 0;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .card-order__title {
+    margin-bottom: 0;
+    font-size: var(--headline-4-size);
+  }
+
+  .card-order__status,
+  .card-order__price,
+  .card-order__action {
+    justify-self: start;
+  }
+
+  .card-order__price {
+    align-self: start;
+    gap: 16px;
+  }
+
+  .card-order__price strong {
+    font-size: var(--headline-5-size);
+  }
+
+  .card-order__items {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .card-order h3 {
+    margin-top: 0;
+    flex-shrink: 0;
+    font-size: var(--body-3-size);
+  }
+
+  .card-order ul {
+    padding-left: 1.15rem;
+  }
+
+  .card-order__action {
+    width: 136px;
+    height: 40px;
+    padding: 8px 24px;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--headline-5-size);
+  }
 }
 
 h1,

@@ -10,6 +10,7 @@ declare module 'vue-router' {
     requiresTechnician?: boolean
     title?: string
     active?: 'requests' | 'jobs' | 'history' | 'account'
+    accountNav?: 'profile' | 'orders' | 'history'
   }
 }
 
