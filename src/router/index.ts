@@ -117,6 +117,12 @@ const router = createRouter({
       meta: { requiresAdmin: true },
     },
     {
+      path: '/admin/services/:id',
+      name: 'admin-service-detail',
+      component: () => import('@/pages/admin/AdminServiceDetailPage.vue'),
+      meta: { requiresAdmin: true },
+    },
+    {
       path: '/admin/promos',
       name: 'admin-promos',
       component: () => import('@/pages/admin/promos/PromoListPage.vue'),

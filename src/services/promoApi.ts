@@ -1,4 +1,3 @@
-import { cloneSeedPromos } from '@/data/adminPromos'
 import { apiFetch } from '@/services/api'
 import { ApiError, isApiError } from '@/types/auth'
 import type { PromoDiscountType, PromotionApiEnvelope, PromotionDto, PromotionPayload } from '@/types/promo'
@@ -33,7 +32,7 @@ function loadMockItems(): PromotionDto[] {
   } catch {
     /* keep seed */
   }
-  return cloneSeedPromos()
+  return []
 }
 
 function persistMock(items: PromotionDto[]): void {

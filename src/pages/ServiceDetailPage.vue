@@ -7,8 +7,7 @@ import BookingOptionList from '@/components/booking/BookingOptionList.vue'
 import BookingSummary from '@/components/booking/BookingSummary.vue'
 import TheHeader from '@/components/layout/TheHeader.vue'
 import { useBooking } from '@/composables/useBooking'
-import { getServiceDetail, type ServiceDetail } from '@/data/serviceDetails'
-import { services } from '@/data/services'
+import type { ServiceDetail } from '@/data/serviceDetails'
 import { getServiceById, type ServiceDetailDto } from '@/services/services'
 import { useAuthStore } from '@/stores/auth'
 import { useBookingStore } from '@/stores/booking'
@@ -28,7 +27,6 @@ const { quantities, increment, decrement, selectedItems, totalPrice, canContinue
 
 function mapDetail(item: ServiceDetailDto): ServiceDetail {
   const fallbackImage =
-    services.find((service) => service.title === item.name)?.image ||
     'https://images.unsplash.com/photo-1556912173-46e0d4d0a0a2?auto=format&fit=crop&w=1440&q=80'
   return {
     serviceId: String(item.id),
@@ -52,9 +50,9 @@ async function loadDetail(id: string): Promise<void> {
       detail.value = mapDetail(response.data)
       return
     }
-    detail.value = getServiceDetail(id) ?? null
+    detail.value = null
   } catch {
-    detail.value = getServiceDetail(id) ?? null
+    detail.value = null
   } finally {
     loading.value = false
   }

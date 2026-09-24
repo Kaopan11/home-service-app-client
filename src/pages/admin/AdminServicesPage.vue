@@ -5,7 +5,7 @@ import AdminLayout from '@/components/admin/AdminLayout.vue'
 import AlertConfirmation from '@/components/admin/AlertConfirmation.vue'
 import { icons } from '@/constants/icons'
 import { filterAdminServices, formatAdminDateTime, serviceTagTone } from '@/data/adminServices'
-import { deleteAdminService, listAdminServices } from '@/services/adminServices'
+import { deleteAdminService, listAdminServices, reorderAdminServices } from '@/services/adminServices'
 import type { AdminServiceItem } from '@/types/adminService'
 
 const router = useRouter()
@@ -15,10 +15,65 @@ const loading = ref(true)
 const error = ref('')
 const pendingDelete = ref<AdminServiceItem | null>(null)
 const deleting = ref(false)
+const draggingId = ref<number | null>(null)
+const reordering = ref(false)
+const canReorder = computed(() => !query.value.trim())
 
 const visibleRows = computed(() => filterAdminServices(rows.value, query.value))
 
 onMounted(loadServices)
+
+function goDetail(item: AdminServiceItem): void {
+  void router.push({ name: 'admin-service-detail', params: { id: String(item.id) } })
+}
+
+function goEdit(item: AdminServiceItem): void {
+  void router.push({ name: 'admin-service-edit', params: { id: String(item.id) } })
+}
+
+function onDragStart(item: AdminServiceItem, event: DragEvent): void {
+  if (!canReorder.value) {
+    event.preventDefault()
+    return
+  }
+  const target = event.target as HTMLElement | null
+  if (!target?.closest('[data-drag-handle]')) {
+    event.preventDefault()
+    return
+  }
+  draggingId.value = item.id
+  event.dataTransfer?.setData('text/plain', String(item.id))
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+  }
+}
+
+async function onDrop(target: AdminServiceItem): Promise<void> {
+  const fromId = draggingId.value
+  draggingId.value = null
+  if (!canReorder.value || fromId == null || fromId === target.id || reordering.value) {
+    return
+  }
+  const fromIndex = rows.value.findIndex((row) => row.id === fromId)
+  const toIndex = rows.value.findIndex((row) => row.id === target.id)
+  if (fromIndex < 0 || toIndex < 0) {
+    return
+  }
+  const previous = rows.value
+  const next = [...rows.value]
+  const [moved] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, moved)
+  rows.value = next.map((row, index) => ({ ...row, sortOrder: index + 1 }))
+  reordering.value = true
+  try {
+    rows.value = await reorderAdminServices(rows.value.map((row) => row.id))
+  } catch (err) {
+    rows.value = previous
+    error.value = err instanceof Error ? err.message : 'ไม่สามารถเรียงลำดับบริการได้'
+  } finally {
+    reordering.value = false
+  }
+}
 
 async function loadServices(): Promise<void> {
   loading.value = true
@@ -85,27 +140,31 @@ async function confirmDelete(): Promise<void> {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in visibleRows" :key="item.id">
-            <td class="col-drag">
-              <img :src="icons.admin.drag" width="56" height="80" alt="" />
+          <tr
+            v-for="item in visibleRows"
+            :key="item.id"
+            :draggable="canReorder"
+            :class="{ 'is-dragging': draggingId === item.id }"
+            @dragstart="onDragStart(item, $event)"
+            @dragend="draggingId = null"
+            @dragover.prevent
+            @drop.prevent="onDrop(item)"
+          >
+            <td class="col-drag" data-drag-handle>
+              <img :src="icons.admin.drag" width="56" height="80" alt="ลากเพื่อเรียงลำดับ" />
             </td>
             <td class="col-index">{{ item.sortOrder }}</td>
-            <td>{{ item.name }}</td>
+            <td class="cell-link" @click="goDetail(item)">{{ item.name }}</td>
             <td>
               <span class="tag" :class="`tag--${serviceTagTone(item)}`">{{ item.categoryName }}</span>
             </td>
-            <td>{{ formatAdminDateTime(item.createdAt) }}</td>
-            <td>{{ formatAdminDateTime(item.updatedAt) }}</td>
+            <td class="cell-link" @click="goDetail(item)">{{ formatAdminDateTime(item.createdAt) }}</td>
+            <td class="cell-link" @click="goDetail(item)">{{ formatAdminDateTime(item.updatedAt) }}</td>
             <td class="col-action">
               <button type="button" class="icon-btn" aria-label="ลบ" @click="pendingDelete = item">
                 <img :src="icons.admin.trash" width="24" height="24" alt="" />
               </button>
-              <button
-                type="button"
-                class="icon-btn"
-                aria-label="แก้ไข"
-                @click="router.push({ name: 'admin-service-edit', params: { id: String(item.id) } })"
-              >
+              <button type="button" class="icon-btn" aria-label="แก้ไข" @click="goEdit(item)">
                 <img :src="icons.admin.edit" width="24" height="24" alt="" />
               </button>
             </td>
@@ -234,6 +293,7 @@ async function confirmDelete(): Promise<void> {
   display: block;
   width: 56px;
   height: 80px;
+  cursor: grab;
 }
 
 .col-index {
@@ -286,5 +346,13 @@ async function confirmDelete(): Promise<void> {
   width: 24px;
   height: 24px;
   display: block;
+}
+
+.cell-link {
+  cursor: pointer;
+}
+
+.is-dragging {
+  opacity: 0.5;
 }
 </style>

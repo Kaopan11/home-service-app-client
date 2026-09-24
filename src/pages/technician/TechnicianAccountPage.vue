@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import TechnicianLayout from '@/components/technician/TechnicianLayout.vue'
-import { MOCK_ADMIN_SERVICES } from '@/data/adminServices'
 import {
   getTechnicianProfile,
   refreshTechnicianLocation,
@@ -79,7 +78,7 @@ function applyProfile(profile: TechnicianProfile): void {
 
 function applyFallback(): void {
   const user = auth.user
-  services.value = MOCK_ADMIN_SERVICES.map((item) => ({ id: item.id, name: item.name }))
+  services.value = []
   const next: FormState = {
     firstName: user?.firstName ?? '',
     lastName: user?.lastName ?? '',

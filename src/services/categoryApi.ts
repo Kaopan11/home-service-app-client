@@ -46,6 +46,24 @@ export async function listCategories(): Promise<CategoryDto[]> {
   }
 }
 
+export async function reorderCategories(ids: number[]): Promise<CategoryDto[]> {
+  try {
+    const response = await apiFetch<CategoryApiEnvelope<CategoryDto[]>>('/api/admin/categories', {
+      method: 'PATCH',
+      body: JSON.stringify({ ids }),
+    })
+    const data = unwrap(response, 'ไม่สามารถเรียงลำดับหมวดหมู่ได้')
+    return data.filter((item) => item.is_active)
+  } catch (error) {
+    throw new ApiError(
+      isApiError(error) ? error.status : 0,
+      mapCategoryError(error, 'ไม่สามารถเรียงลำดับหมวดหมู่ได้'),
+      isApiError(error) ? error.code : undefined,
+      isApiError(error) ? error.errors : undefined,
+    )
+  }
+}
+
 export async function getCategory(id: number): Promise<CategoryDto> {
   try {
     const response = await apiFetch<CategoryApiEnvelope<CategoryDto>>(`/api/admin/categories/${id}`)
