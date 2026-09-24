@@ -29,8 +29,9 @@ const categoryId = ref<number | null>(null)
 const imageUrl = ref('')
 const imageError = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
-const options = ref<ServiceOptionForm[]>([newOption()])
-const nextOptionKey = ref(2)
+const optionsSection = ref<HTMLElement | null>(null)
+const options = ref<ServiceOptionForm[]>([newOption(1), newOption(2)])
+const nextOptionKey = ref(3)
 const draggingOptionKey = ref<number | null>(null)
 const categories = ref<CategoryDto[]>([])
 const loading = ref(true)
@@ -75,11 +76,8 @@ const missingHint = computed(() => {
   if (!imageUrl.value) {
     return 'กรุณาอัปโหลดรูปภาพก่อนกดยืนยัน'
   }
-  if (!isEdit.value && !optionsValid.value) {
-    return 'กรุณากรอกรายการบริการย่อยให้ครบ (ชื่อ ราคา และหน่วย)'
-  }
-  if (isEdit.value && filledOptions.value.some((option) => !optionIsComplete(option))) {
-    return 'กรุณากรอกรายการบริการย่อยให้ครบ หรือลบรายการที่ยังว่าง'
+  if (!optionsValid.value) {
+    return 'กรุณากรอกรายการบริการย่อยอย่างน้อย 1 รายการ (ชื่อ ราคา และหน่วย)'
   }
   return ''
 })
@@ -116,6 +114,9 @@ onMounted(async () => {
 async function handleSubmit(): Promise<void> {
   if (missingHint.value) {
     error.value = missingHint.value
+    if (!optionsValid.value) {
+      optionsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
     return
   }
   const selectedCategoryId = Number(categoryId.value)
@@ -150,12 +151,12 @@ async function handleSubmit(): Promise<void> {
   }
 }
 
-function newOption(): ServiceOptionForm {
-  return { key: 1, name: '', price: '', unit: '' }
+function newOption(key = 1): ServiceOptionForm {
+  return { key, name: '', price: '', unit: '' }
 }
 
 function addOption(): void {
-  options.value.push({ ...newOption(), key: nextOptionKey.value++ })
+  options.value.push(newOption(nextOptionKey.value++))
 }
 
 function removeOption(key: number): void {
@@ -323,7 +324,7 @@ async function confirmDelete(): Promise<void> {
     </template>
 
     <p v-if="loading" class="status">กำลังโหลดข้อมูล...</p>
-    <form v-else class="card" @submit.prevent="handleSubmit">
+    <form v-else class="service-form" @submit.prevent="handleSubmit">
       <p v-if="error || missingHint" class="status status--error">{{ error || missingHint }}</p>
       <div class="row">
         <label class="label" for="service-name">ชื่อบริการ<span>*</span></label>
@@ -376,70 +377,85 @@ async function confirmDelete(): Promise<void> {
         </div>
       </div>
 
-      <template>
-        <div class="divider" />
-        <h2 class="section-title">รายการบริการย่อย</h2>
-        <div class="options">
-          <div
-            v-for="option in options"
-            :key="option.key"
-            class="option-row"
-            :class="{ 'option-row--dragging': draggingOptionKey === option.key }"
-            @dragstart="onOptionDragStart(option.key, $event)"
-            @dragend="draggingOptionKey = null"
-            @dragover.prevent
-            @drop.prevent="onOptionDrop(option.key)"
-          >
-            <img
-              class="drag-handle"
-              :src="icons.admin.drag"
-              width="20"
-              height="44"
-              alt="ลากเพื่อเรียงลำดับ"
-              draggable="true"
-            />
+      <div class="divider" />
+      <h2 class="section-title">รายการบริการย่อย</h2>
+      <div ref="optionsSection" class="options">
+        <div
+          v-for="(option, index) in options"
+          :key="option.key"
+          class="option-row"
+          :class="{ 'option-row--dragging': draggingOptionKey === option.key }"
+          @dragstart="onOptionDragStart(option.key, $event)"
+          @dragend="draggingOptionKey = null"
+          @dragover.prevent
+          @drop.prevent="onOptionDrop(option.key)"
+        >
+          <img
+            class="drag-handle"
+            :src="icons.admin.drag"
+            width="20"
+            height="20"
+            alt="ลากเพื่อเรียงลำดับ"
+            draggable="true"
+          />
+          <div class="option-fields">
             <label class="option-field option-field--name">
-              <span>ชื่อรายการ<span>*</span></span>
+              <span>ชื่อรายการ<span v-if="index === 0">*</span></span>
               <input v-model="option.name" type="text" maxlength="255" />
             </label>
-            <label class="option-field">
-              <span>ค่าบริการ / 1 หน่วย<span>*</span></span>
-              <span class="price-input">
-                <input v-model="option.price" type="number" min="0.01" step="0.01" />
-                <span>฿</span>
-              </span>
-            </label>
-            <label class="option-field">
-              <span>หน่วยการบริการ<span>*</span></span>
-              <input v-model="option.unit" type="text" maxlength="255" />
-            </label>
-            <button
-              type="button"
-              class="remove-option"
-              :disabled="options.length === 1"
-              @click="removeOption(option.key)"
-            >
-              ลบรายการ
-            </button>
+            <template v-if="isEdit">
+              <label class="option-field">
+                <span>หน่วยการบริการ<span v-if="index === 0">*</span></span>
+                <input v-model="option.unit" type="text" maxlength="255" />
+              </label>
+              <label class="option-field">
+                <span>ค่าบริการ / 1 หน่วย<span v-if="index === 0">*</span></span>
+                <span class="price-input">
+                  <input v-model="option.price" type="number" min="0.01" step="0.01" />
+                  <span>฿</span>
+                </span>
+              </label>
+            </template>
+            <template v-else>
+              <label class="option-field">
+                <span>ค่าบริการ / 1 หน่วย</span>
+                <span class="price-input">
+                  <input v-model="option.price" type="number" min="0.01" step="0.01" />
+                  <span>฿</span>
+                </span>
+              </label>
+              <label class="option-field">
+                <span>หน่วยการบริการ</span>
+                <input v-model="option.unit" type="text" maxlength="255" />
+              </label>
+            </template>
+          </div>
+          <button
+            type="button"
+            class="remove-option"
+            :disabled="options.length === 1"
+            @click="removeOption(option.key)"
+          >
+            ลบรายการ
+          </button>
+        </div>
+      </div>
+      <button type="button" class="add-option" @click="addOption">
+        เพิ่มรายการ
+        <img :src="icons.admin.plus" width="20" height="20" alt="" />
+      </button>
+      <template v-if="isEdit">
+        <div class="divider" />
+        <div class="meta">
+          <div class="row">
+            <span class="label">สร้างเมื่อ</span>
+            <span class="meta-value">{{ formatAdminDateTime(createdAt) }}</span>
+          </div>
+          <div class="row">
+            <span class="label">แก้ไขล่าสุด</span>
+            <span class="meta-value">{{ formatAdminDateTime(updatedAt) }}</span>
           </div>
         </div>
-        <button type="button" class="add-option" @click="addOption">
-          เพิ่มรายการ
-          <img :src="icons.admin.plus" width="20" height="20" alt="" />
-        </button>
-        <template v-if="isEdit">
-          <div class="divider" />
-          <div class="meta">
-            <div class="row">
-              <span class="label">สร้างเมื่อ</span>
-              <span class="meta-value">{{ formatAdminDateTime(createdAt) }}</span>
-            </div>
-            <div class="row">
-              <span class="label">แก้ไขล่าสุด</span>
-              <span class="meta-value">{{ formatAdminDateTime(updatedAt) }}</span>
-            </div>
-          </div>
-        </template>
       </template>
     </form>
     <div v-if="isEdit && !loading" class="delete-wrap">
@@ -557,17 +573,17 @@ async function confirmDelete(): Promise<void> {
   color: #c82438;
 }
 
-.card {
+.service-form {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   width: 1120px;
   max-width: 100%;
-  min-height: 304px;
   margin-top: 16px;
   padding: 40px 24px;
   gap: 40px;
+  overflow: visible;
   background: #ffffff;
   border: 1px solid #e6e7eb;
   border-radius: 8px;
@@ -711,16 +727,19 @@ async function confirmDelete(): Promise<void> {
 .options {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  width: 100%;
+  gap: 36px;
+  width: 1072px;
+  max-width: 100%;
 }
 
 .option-row {
-  display: grid;
-  grid-template-columns: 20px minmax(280px, 1fr) 240px 240px auto;
-  gap: 12px;
-  align-items: end;
-  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+  width: 1072px;
+  max-width: 100%;
+  overflow: visible;
 }
 
 .option-row--dragging {
@@ -728,21 +747,36 @@ async function confirmDelete(): Promise<void> {
 }
 
 .drag-handle {
-  align-self: end;
+  flex-shrink: 0;
   width: 20px;
-  height: 38px;
-  object-fit: cover;
-  object-position: left;
+  height: 20px;
+  margin-top: 22px;
   cursor: grab;
+}
+
+.option-fields {
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  gap: 12px;
+  width: 925px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .option-field {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 240px;
   min-width: 0;
   color: #646c80;
   font-size: 14px;
+}
+
+.option-field--name {
+  width: 422px;
+  flex: 1 1 422px;
 }
 
 .option-field > span > span {
@@ -778,8 +812,10 @@ async function confirmDelete(): Promise<void> {
 }
 
 .remove-option {
+  flex-shrink: 0;
   align-self: end;
   height: 38px;
+  margin-bottom: 0;
   padding: 0;
   border: none;
   background: transparent;
@@ -815,6 +851,10 @@ async function confirmDelete(): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.meta .row {
+  width: auto;
 }
 
 .meta-value {

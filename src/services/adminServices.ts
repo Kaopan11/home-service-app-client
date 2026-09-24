@@ -110,6 +110,9 @@ function mapAdminService(data: AdminServiceItem): AdminServiceItem {
 }
 
 function mapSaveError(error: unknown, fallback: string): ApiError {
+  if (isApiError(error) && /at least one service option/i.test(error.message)) {
+    return new ApiError(error.status, 'กรุณากรอกรายการบริการย่อยอย่างน้อย 1 รายการ')
+  }
   if (isApiError(error) && (error.status === 413 || error.status === 400) && /image|too large|exceed/i.test(error.message)) {
     return new ApiError(error.status, 'บันทึกรูปไม่สำเร็จ ลองใช้ไฟล์ PNG/JPG ที่เล็กกว่า 5MB')
   }
