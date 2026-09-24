@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import TheFooter from '@/components/layout/TheFooter.vue'
-import TheHeader from '@/components/layout/TheHeader.vue'
+import CustomerAccountLayout from '@/components/layout/CustomerAccountLayout.vue'
 import SelectDropdown from '@/components/ui/SelectDropdown.vue'
 import { icons } from '@/constants/icons'
 import { getDistricts, getProvinces, getSubdistricts } from '@/data/thaiAddress'
@@ -302,8 +301,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="user-profile-page">
-    <TheHeader />
+  <CustomerAccountLayout>
+    <template #banner>
+      <h1 id="profile-heading">ข้อมูลผู้ใช้งาน</h1>
+    </template>
 
     <!-- Success Toast Notification -->
     <transition name="toast-fade">
@@ -337,66 +338,9 @@ onMounted(async () => {
       </div>
     </transition>
 
-    <main class="profile-container">
-      <div class="profile-layout">
-        <!-- Sidebar Navigation -->
-        <aside class="profile-sidebar" aria-label="เมนูบัญชีผู้ใช้">
-          <div class="sidebar-card">
-            <h2 class="sidebar-card__title">บัญชีผู้ใช้</h2>
-            <nav class="sidebar-nav">
-              <a href="/profile" class="sidebar-nav__item sidebar-nav__item--active" aria-current="page">
-                <span class="sidebar-nav__icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 7C16 8.06087 15.5786 9.07828 14.8284 9.82843C14.0783 10.5786 13.0609 11 12 11C10.9391 11 9.92172 10.5786 9.17157 9.82843C8.42143 9.07828 8 8.06087 8 7C8 5.93913 8.42143 4.92172 9.17157 4.17157C9.92172 3.42143 10.9391 3 12 3C13.0609 3 14.0783 3.42143 14.8284 4.17157C15.5786 4.92172 16 5.93913 16 7Z" />
-                    <path d="M12 14C10.1435 14 8.36301 14.7375 7.05025 16.0503C5.7375 17.363 5 19.1435 5 21H19C19 19.1435 18.2625 17.363 16.9497 16.0503C15.637 14.7375 13.8565 14 12 14Z" />
-                  </svg>
-                </span>
-                <span class="sidebar-nav__text">ข้อมูลผู้ใช้งาน</span>
-              </a>
-
-              <RouterLink :to="{ name: 'profile-password' }" class="sidebar-nav__item">
-                <span class="sidebar-nav__icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                </span>
-                <span class="sidebar-nav__text">รีเซ็ตรหัสผ่าน</span>
-              </RouterLink>
-
-              <RouterLink class="sidebar-nav__item" :to="{ name: 'user-orders' }">
-                <span class="sidebar-nav__icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 5H7C6.46957 5 5.96086 5.21071 5.58579 5.58579C5.21071 5.96086 5 6.46957 5 7V19C5 19.5304 5.21071 20.0391 5.58579 20.4142C5.96086 20.7893 6.46957 21 7 21H17C17.5304 21 18.0391 20.7893 18.4142 20.4142C18.7893 20.0391 19 19.5304 19 19V7C19 6.46957 18.7893 5.96086 18.4142 5.58579C18.0391 5.21071 17.5304 5 17 5H15" />
-                    <path d="M9 5C9 5.53043 9.21071 6.03914 9.58579 6.41421C9.96086 6.78929 10.4696 7 11 7H13C13.5304 7 14.0391 6.78929 14.4142 6.41421C14.7893 6.03914 15 5.53043 15 5" />
-                    <line x1="12" y1="12" x2="16" y2="12" />
-                    <line x1="12" y1="16" x2="16" y2="16" />
-                  </svg>
-                </span>
-                <span class="sidebar-nav__text">รายการคำสั่งซ่อม</span>
-              </RouterLink>
-
-              <RouterLink class="sidebar-nav__item" :to="{ name: 'user-history' }">
-                <span class="sidebar-nav__icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                </span>
-                <span class="sidebar-nav__text">ประวัติการซ่อม</span>
-              </RouterLink>
-            </nav>
-          </div>
-        </aside>
-
-        <!-- Main Form Card -->
-        <section class="profile-content" aria-labelledby="profile-heading">
-          <div class="main-card">
-            <header class="main-card__header">
-              <h1 id="profile-heading" class="main-card__title">ข้อมูลผู้ใช้งาน</h1>
-            </header>
-
-            <!-- Avatar Section -->
+    <section class="profile-content" aria-labelledby="profile-heading">
+      <div class="main-card">
+        <!-- Avatar Section -->
             <div class="avatar-section">
               <div class="avatar-wrapper">
                 <img
@@ -610,101 +554,10 @@ onMounted(async () => {
             </form>
           </div>
         </section>
-      </div>
-    </main>
-
-    <TheFooter />
-  </div>
+  </CustomerAccountLayout>
 </template>
 
 <style scoped>
-.user-profile-page {
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-}
-
-.profile-container {
-  flex: 1;
-  max-width: 1440px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 2.5rem 2rem 4rem;
-}
-
-.profile-layout {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: 2rem;
-  align-items: start;
-}
-
-/* Sidebar */
-.profile-sidebar {
-  width: 100%;
-}
-
-.sidebar-card {
-  background: var(--white);
-  border: 1px solid var(--gray-300);
-  border-radius: 8px;
-  padding: 1.5rem 1rem;
-}
-
-.sidebar-card__title {
-  margin: 0 0 1rem;
-  padding: 0 0.75rem;
-  font-family: var(--font-family);
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--gray-900);
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.sidebar-nav__item {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 0.75rem 0.875rem;
-  border-radius: 8px;
-  text-decoration: none;
-  font-family: var(--font-family);
-  font-size: 0.9375rem;
-  font-weight: 400;
-  color: var(--gray-700);
-  transition: all 0.15s ease;
-}
-
-.sidebar-nav__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  color: var(--gray-500);
-}
-
-.sidebar-nav__item:hover:not(.sidebar-nav__item--active) {
-  background: var(--gray-100);
-  color: var(--gray-900);
-}
-
-.sidebar-nav__item--active {
-  background: var(--blue-100);
-  color: var(--blue-600);
-  font-weight: 500;
-}
-
-.sidebar-nav__item--active .sidebar-nav__icon {
-  color: var(--blue-600);
-}
-
 /* Main Card */
 .profile-content {
   min-width: 0;
@@ -715,18 +568,6 @@ onMounted(async () => {
   border: 1px solid var(--gray-300);
   border-radius: 8px;
   padding: 2.5rem;
-}
-
-.main-card__header {
-  margin-bottom: 2rem;
-}
-
-.main-card__title {
-  margin: 0;
-  font-family: var(--font-family);
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--gray-950);
 }
 
 /* Avatar Section */
@@ -1042,10 +883,6 @@ onMounted(async () => {
 
 /* Responsive */
 @media (max-width: 960px) {
-  .profile-layout {
-    grid-template-columns: 1fr;
-  }
-
   .main-card {
     padding: 1.5rem;
   }
@@ -1065,10 +902,6 @@ onMounted(async () => {
 }
 
 @media (max-width: 576px) {
-  .profile-container {
-    padding: 1.25rem 1rem 2.5rem;
-  }
-
   .avatar-section {
     flex-direction: column;
     align-items: flex-start;
