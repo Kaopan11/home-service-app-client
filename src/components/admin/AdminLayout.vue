@@ -153,6 +153,7 @@ async function handleLogout(): Promise<void> {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  min-height: 100svh;
 }
 
 .admin-topbar {
@@ -167,6 +168,8 @@ async function handleLogout(): Promise<void> {
 
 .admin-content {
   flex: 1;
+  min-height: 0;
   padding: 40px;
+  overflow: auto;
 }
 </style>
