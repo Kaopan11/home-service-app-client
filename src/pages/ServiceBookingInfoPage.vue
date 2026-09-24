@@ -5,9 +5,20 @@ import BookingInfoForm from '@/components/booking/BookingInfoForm.vue'
 import BookingLayout from '@/components/booking/BookingLayout.vue'
 import BookingPayment from '@/components/booking/BookingPayment.vue'
 import BookingSummary from '@/components/booking/BookingSummary.vue'
+import TheHeader from '@/components/layout/TheHeader.vue'
 import { formatAddressSummary } from '@/services/userService'
+import { formatBaht } from '@/data/serviceDetails'
 import { useBookingStore, type BookingCustomerInfo } from '@/stores/booking'
 import { useProfileStore } from '@/stores/profile'
+import type { SelectedBookingItem } from '@/composables/useBooking'
+
+type PaymentReceipt = {
+  items: SelectedBookingItem[]
+  totalPrice: number
+  date: string
+  time: string
+  address: string
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -21,6 +32,7 @@ const step = ref<2 | 3>(2)
 const paymentMethod = ref<'promptpay' | 'card'>('card')
 const paymentValid = ref(false)
 const paymentConfirmed = ref(false)
+const receipt = ref<PaymentReceipt | null>(null)
 const paymentRef = ref<InstanceType<typeof BookingPayment> | null>(null)
 const submittingPayment = computed(() => paymentRef.value?.submitting ?? false)
 
@@ -155,6 +167,13 @@ async function goNext(): Promise<void> {
   if (!canContinue.value) return
   const ok = await paymentRef.value?.submit()
   if (ok) {
+    receipt.value = {
+      items: draft.value?.items ?? [],
+      totalPrice: draft.value?.totalPrice ?? 0,
+      date: formattedDate.value,
+      time: formattedTime.value,
+      address: formattedAddress.value,
+    }
     paymentConfirmed.value = true
     bookingStore.clear()
   }
@@ -166,19 +185,58 @@ async function goNext(): Promise<void> {
     <p>กำลังโหลดข้อมูลการจอง...</p>
   </section>
 
-  <section v-else-if="paymentConfirmed" class="confirmed">
-    <img
-      class="confirmed__icon"
-      src="/icons/action/check-circle-filled.svg"
-      alt=""
-      width="64"
-      height="64"
-    />
-    <h1 class="confirmed__title">ชำระเงินสำเร็จ</h1>
-    <p class="confirmed__text">
-      ขอบคุณที่ใช้บริการ HomeServices ทีมงานจะติดต่อกลับเพื่อยืนยันนัดหมาย
-    </p>
-    <RouterLink class="btn btn--primary" :to="{ name: 'home' }">กลับสู่หน้าหลัก</RouterLink>
+  <section v-else-if="paymentConfirmed && receipt" class="confirmed">
+    <TheHeader />
+    <div class="confirmed__card">
+      <svg class="confirmed__icon" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="32" fill="var(--green-900)" />
+        <path
+          d="M20 33L28 41L44 24"
+          fill="none"
+          stroke="var(--white)"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+
+      <h1 class="confirmed__title">ชำระเงินเรียบร้อย !</h1>
+
+      <ul class="confirmed__items">
+        <li v-for="item in receipt.items" :key="item.id" class="confirmed__row">
+          <span class="confirmed__name">{{ item.name }}</span>
+          <span class="confirmed__qty">{{ item.quantity }} รายการ</span>
+        </li>
+      </ul>
+
+      <div class="confirmed__divider" role="separator"></div>
+
+      <dl class="confirmed__meta">
+        <div class="confirmed__row">
+          <dt>วันที่</dt>
+          <dd>{{ receipt.date }}</dd>
+        </div>
+        <div class="confirmed__row">
+          <dt>เวลา</dt>
+          <dd>{{ receipt.time }}</dd>
+        </div>
+        <div class="confirmed__row">
+          <dt>สถานที่</dt>
+          <dd class="confirmed__address">{{ receipt.address }}</dd>
+        </div>
+      </dl>
+
+      <div class="confirmed__divider" role="separator"></div>
+
+      <div class="confirmed__total">
+        <span>รวม</span>
+        <strong>{{ formatBaht(receipt.totalPrice) }}</strong>
+      </div>
+
+      <RouterLink class="btn btn--primary confirmed__cta" :to="{ name: 'user-orders' }">
+        เช็ครายการซ่อม
+      </RouterLink>
+    </div>
   </section>
 
   <BookingLayout
@@ -235,24 +293,96 @@ async function goNext(): Promise<void> {
 }
 
 .confirmed {
+  min-height: 100svh;
+  background: var(--bg);
+}
+
+.confirmed__card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
   max-width: 28rem;
-  margin: 0 auto;
-  padding: 6rem 1.5rem;
+  margin: 3rem auto 0;
+  padding: 2.5rem 2rem;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
   text-align: center;
 }
 
+.confirmed__icon {
+  margin-bottom: 0.5rem;
+}
+
 .confirmed__title {
+  margin-bottom: 1rem;
   font-size: var(--headline-2-size);
   font-weight: var(--font-weight-medium);
   color: var(--gray-950);
 }
 
-.confirmed__text {
-  margin-bottom: 0.75rem;
+.confirmed__items {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.confirmed__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.625rem;
+  font-size: var(--body-3-size);
+  color: var(--gray-700);
+}
+
+.confirmed__row:last-child {
+  margin-bottom: 0;
+}
+
+.confirmed__meta {
+  width: 100%;
+  margin: 0;
+}
+
+.confirmed__meta dt {
   color: var(--gray-600);
+}
+
+.confirmed__meta dd {
+  margin: 0;
+  text-align: right;
+}
+
+.confirmed__address {
+  max-width: 14rem;
+}
+
+.confirmed__divider {
+  width: 100%;
+  height: 1px;
+  margin: 1rem 0;
+  background: var(--gray-300);
+}
+
+.confirmed__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1.5rem;
+  font-size: var(--body-2-size);
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-950);
+}
+
+.confirmed__total strong {
+  font-size: var(--headline-4-size);
+}
+
+.confirmed__cta {
+  width: 100%;
 }
 </style>
