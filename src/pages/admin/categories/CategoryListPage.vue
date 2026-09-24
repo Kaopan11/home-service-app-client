@@ -5,7 +5,7 @@ import AdminLayout from '@/components/admin/AdminLayout.vue'
 import AlertConfirmation from '@/components/admin/AlertConfirmation.vue'
 import { icons } from '@/constants/icons'
 import { formatAdminDateTime } from '@/data/adminServices'
-import { deleteCategory, listCategories } from '@/services/categoryApi'
+import { deleteCategory, listCategories, reorderCategories } from '@/services/categoryApi'
 import type { CategoryDto } from '@/types/category'
 
 const router = useRouter()
@@ -16,6 +16,8 @@ const error = ref('')
 const draggingId = ref<number | null>(null)
 const pendingDelete = ref<CategoryDto | null>(null)
 const deleting = ref(false)
+const reordering = ref(false)
+const canReorder = computed(() => !query.value.trim())
 
 const visibleRows = computed(() => {
   const needle = query.value.trim().toLowerCase()
@@ -48,6 +50,10 @@ function goEdit(item: CategoryDto): void {
 }
 
 function onDragStart(item: CategoryDto, event: DragEvent): void {
+  if (!canReorder.value) {
+    event.preventDefault()
+    return
+  }
   const target = event.target as HTMLElement | null
   if (!target?.closest('[data-drag-handle]')) {
     event.preventDefault()
@@ -60,10 +66,10 @@ function onDragStart(item: CategoryDto, event: DragEvent): void {
   }
 }
 
-function onDrop(target: CategoryDto): void {
+async function onDrop(target: CategoryDto): Promise<void> {
   const fromId = draggingId.value
   draggingId.value = null
-  if (fromId == null || fromId === target.category_id) {
+  if (!canReorder.value || fromId == null || fromId === target.category_id || reordering.value) {
     return
   }
   const fromIndex = rows.value.findIndex((row) => row.category_id === fromId)
@@ -71,10 +77,20 @@ function onDrop(target: CategoryDto): void {
   if (fromIndex < 0 || toIndex < 0) {
     return
   }
+  const previous = rows.value
   const next = [...rows.value]
   const [moved] = next.splice(fromIndex, 1)
   next.splice(toIndex, 0, moved)
   rows.value = next
+  reordering.value = true
+  try {
+    rows.value = await reorderCategories(rows.value.map((row) => row.category_id))
+  } catch (err) {
+    rows.value = previous
+    error.value = err instanceof Error ? err.message : 'ไม่สามารถเรียงลำดับหมวดหมู่ได้'
+  } finally {
+    reordering.value = false
+  }
 }
 
 async function confirmDelete(): Promise<void> {
@@ -129,7 +145,7 @@ async function confirmDelete(): Promise<void> {
           <tr
             v-for="(item, index) in visibleRows"
             :key="item.category_id"
-            draggable="true"
+            :draggable="canReorder"
             :class="{ 'is-dragging': draggingId === item.category_id }"
             @dragstart="onDragStart(item, $event)"
             @dragend="draggingId = null"

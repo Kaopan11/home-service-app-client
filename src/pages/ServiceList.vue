@@ -5,7 +5,7 @@ import ServiceFilterBar from '@/components/home/ServiceFilterBar.vue'
 import ServiceGrid from '@/components/home/ServiceGrid.vue'
 import TheFooter from '@/components/layout/TheFooter.vue'
 import TheHeader from '@/components/layout/TheHeader.vue'
-import { filterServices, services, type Service } from '@/data/services'
+import { filterServices, type Service } from '@/data/services'
 import { getServices, type ServiceListResponse } from '@/services/services'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -17,13 +17,12 @@ const PLACEHOLDER_IMAGE =
   'https://images.unsplash.com/photo-1556912173-46e0d4d0a0a2?auto=format&fit=crop&w=800&q=80'
 
 function mapApiService(item: ApiService): Service {
-  const fallback = services.find((service) => service.title === item.name)
   return {
     id: String(item.id),
     title: item.name,
     category: item.categoryName,
-    priceMin: Number(item.priceMin ?? fallback?.priceMin ?? 0),
-    image: item.image || fallback?.image || PLACEHOLDER_IMAGE,
+    priceMin: Number(item.priceMin ?? 0),
+    image: item.image || PLACEHOLDER_IMAGE,
   }
 }
 
@@ -35,8 +34,8 @@ onMounted(async () => {
     const res = await getServices()
     items.value = res.data.map(mapApiService)
   } catch {
-    error.value = 'โหลดบริการไม่สำเร็จ แสดงข้อมูลตัวอย่างแทน'
-    items.value = services
+    error.value = 'โหลดบริการไม่สำเร็จ'
+    items.value = []
   }
 })
 
