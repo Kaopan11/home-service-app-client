@@ -41,33 +41,6 @@ async function handleSubmit(): Promise<void> {
     submitting.value = false
   }
 }
-
-function handleDemoTechnician(): void {
-  formError.value = ''
-  form.email = ''
-  form.password = ''
-  auth.setSession(
-    {
-      accessToken: 'demo-technician-token',
-      refreshToken: 'demo-refresh-token',
-      expiresAt: Math.floor(Date.now() / 1000) + 86400,
-      tokenType: 'bearer',
-    },
-    {
-      id: 1,
-      email: 'technician@home.com',
-      fullName: 'สแน เขียยอด',
-      displayName: 'สแน เขียยอด',
-      firstName: 'สแน',
-      lastName: 'เขียยอด',
-      phone: '0890002345',
-      address: '332 อาคารเดอะไนน์ทาวเวอร์ เสนานิคม จตุจักร กรุงเทพฯ',
-      avatarUrl: null,
-      role: 'TECHNICIAN',
-    },
-  )
-  void router.push({ name: 'technician-jobs' })
-}
 </script>
 
 <template>
@@ -118,15 +91,6 @@ function handleDemoTechnician(): void {
             alt=""
           />
           เข้าสู่ระบบด้วย Facebook
-        </button>
-
-        <button
-          id="demo-technician-btn"
-          class="btn btn--secondary demo-tech-btn"
-          type="button"
-          @click="handleDemoTechnician"
-        >
-          เข้าสู่ระบบช่าง (Demo Mode)
         </button>
 
         <p class="auth-footer">
