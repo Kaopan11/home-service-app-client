@@ -173,13 +173,13 @@ const router = createRouter({
     {
       path: '/technician/history',
       name: 'technician-history',
-      component: () => import('@/pages/technician/TechnicianHistoryPage.vue'),
+      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
       meta: { requiresTechnician: true, title: 'ประวัติการซ่อม', active: 'history' },
     },
     {
       path: '/technician/history/:id',
       name: 'technician-history-detail',
-      component: () => import('@/pages/technician/TechnicianHistoryDetailPage.vue'),
+      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
       meta: { requiresTechnician: true, title: 'รายละเอียดประวัติการซ่อม', active: 'history' },
     },
     {
