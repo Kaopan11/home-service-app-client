@@ -3,6 +3,7 @@ import { ApiError, isApiError } from '@/types/auth'
 import type {
   AdminServiceItem,
   AdminServiceListResponse,
+  AdminServiceOption,
   AdminServiceResponse,
   SaveAdminServiceInput,
 } from '@/types/adminService'
