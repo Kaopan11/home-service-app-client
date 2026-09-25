@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useTechnicianJobsStore } from '@/stores/technicianJobs'
 import { isApiError, type AdminUser } from '@/types/auth'
 import type { TechnicianProfile, TechnicianServiceOption } from '@/types/technician'
+import { getStoredAccessToken } from '@/utils/authStorage'
 
 type FormState = {
   firstName: string
@@ -115,7 +116,10 @@ async function loadProfile(): Promise<void> {
     applyProfile(await getTechnicianProfile())
   } catch (err) {
     applyFallback()
-    error.value = isApiError(err) ? err.message : 'ไม่สามารถโหลดข้อมูลบัญชีได้'
+    const token = getStoredAccessToken()
+    if (!token?.startsWith('demo-')) {
+      error.value = isApiError(err) ? err.message : 'ไม่สามารถโหลดข้อมูลบัญชีได้'
+    }
   } finally {
     loading.value = false
   }

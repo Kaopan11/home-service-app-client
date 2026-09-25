@@ -49,7 +49,8 @@ function defaultErrorMessage(status: number, path: string): string {
 }
 
 async function redirectToLoginIfUnauthorized(path: string, status: number): Promise<void> {
-  if (status !== 401 || path.startsWith('/api/services') || PUBLIC_AUTH_PATHS.includes(path)) {
+  const token = getStoredAccessToken()
+  if (status !== 401 || path.startsWith('/api/services') || PUBLIC_AUTH_PATHS.includes(path) || token?.startsWith('demo-')) {
     return
   }
 

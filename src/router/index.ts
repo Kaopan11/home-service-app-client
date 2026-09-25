@@ -159,14 +159,28 @@ const router = createRouter({
     {
       path: '/technician/jobs',
       name: 'technician-jobs',
-      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
+      alias: '/technician/pending',
+      component: () => import('@/pages/technician/TechnicianPendingPage.vue'),
       meta: { requiresTechnician: true, title: 'รายการที่รอดำเนินการ', active: 'jobs' },
+    },
+    {
+      path: '/technician/jobs/:id',
+      name: 'technician-pending-detail',
+      alias: '/technician/pending/:id',
+      component: () => import('@/pages/technician/TechnicianPendingDetailPage.vue'),
+      meta: { requiresTechnician: true, title: 'รายละเอียดคำสั่งซ่อม', active: 'jobs' },
     },
     {
       path: '/technician/history',
       name: 'technician-history',
-      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
+      component: () => import('@/pages/technician/TechnicianHistoryPage.vue'),
       meta: { requiresTechnician: true, title: 'ประวัติการซ่อม', active: 'history' },
+    },
+    {
+      path: '/technician/history/:id',
+      name: 'technician-history-detail',
+      component: () => import('@/pages/technician/TechnicianHistoryDetailPage.vue'),
+      meta: { requiresTechnician: true, title: 'รายละเอียดประวัติการซ่อม', active: 'history' },
     },
     {
       path: '/technician/account',

@@ -51,3 +51,38 @@ export type UpdateTechnicianProfileRequest = {
   serviceIds: number[]
 }
 
+export type TechnicianJobItem = {
+  id: number
+  orderCode: string
+  serviceId: number
+  serviceName: string
+  categoryId: number | null
+  categoryName: string
+  scheduledAt: string
+  totalPrice: number
+  status: string
+  address: string
+  customerName: string
+}
+
+export type TechnicianJobDetail = {
+  id: number
+  orderCode: string
+  serviceId: number
+  serviceName: string
+  categoryId: number | null
+  categoryName: string
+  itemsDescription: string
+  scheduledAt: string
+  address: string
+  latitude: number | null
+  longitude: number | null
+  totalPrice: number
+  customerName: string
+  customerPhone: string
+  rating: number | null
+  reviewComment: string | null
+  status: string
+  createdAt: string
+}
+
