@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { icons } from '@/constants/icons'
 import TheHeader from '@/components/layout/TheHeader.vue'
@@ -20,6 +20,56 @@ const form = reactive({
 
 const formError = ref('')
 const submitting = ref(false)
+
+type PolicyKey = 'terms' | 'privacy'
+
+const POLICIES: Record<PolicyKey, { title: string; paragraphs: string[] }> = {
+  terms: {
+    title: 'ข้อตกลงและเงื่อนไข',
+    paragraphs: [
+      'การใช้บริการ HomeServices ถือว่าคุณยอมรับข้อตกลงนี้',
+      'กรุณากรอกชื่อ เบอร์โทร และอีเมลที่ติดต่อได้จริง เพื่อให้นัดหมายและให้บริการได้',
+      'การจองจะสมบูรณ์เมื่อชำระเงินสำเร็จ และสามารถตรวจสอบสถานะได้ในหน้ารายการคำสั่งซ่อม',
+    ],
+  },
+  privacy: {
+    title: 'นโยบายความเป็นส่วนตัว',
+    paragraphs: [
+      'เราเก็บชื่อ เบอร์โทร อีเมล และที่อยู่ เพื่อใช้ติดต่อและให้บริการซ่อมเท่านั้น',
+      'ข้อมูลนี้ไม่ถูกขายหรือเปิดเผยให้บุคคลภายนอก นอกจากช่างที่รับงานของคุณ',
+      'คุณสามารถแก้ไขข้อมูลส่วนตัวได้ในหน้าโปรไฟล์หลังเข้าสู่ระบบ',
+    ],
+  },
+}
+
+const policy = ref<PolicyKey | null>(null)
+
+function openPolicy(key: PolicyKey): void {
+  policy.value = key
+}
+
+function closePolicy(): void {
+  policy.value = null
+}
+
+function onKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && policy.value) {
+    closePolicy()
+  }
+}
+
+watch(policy, (current) => {
+  document.body.style.overflow = current ? 'hidden' : ''
+})
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  document.body.style.overflow = ''
+})
 
 async function handleSubmit(): Promise<void> {
   formError.value = ''
@@ -105,9 +155,13 @@ async function handleSubmit(): Promise<void> {
             <input v-model="form.accepted" type="checkbox" name="accepted" />
             <span>
               ยอมรับ
-              <a href="#">ข้อตกลงและเงื่อนไข</a>
+              <button type="button" class="auth-terms__link" @click.stop="openPolicy('terms')">
+                ข้อตกลงและเงื่อนไข
+              </button>
               และ
-              <a href="#">นโยบายความเป็นส่วนตัว</a>
+              <button type="button" class="auth-terms__link" @click.stop="openPolicy('privacy')">
+                นโยบายความเป็นส่วนตัว
+              </button>
             </span>
           </label>
 
@@ -131,6 +185,32 @@ async function handleSubmit(): Promise<void> {
         <RouterLink class="auth-back" :to="{ name: 'login' }">กลับไปหน้าเข้าสู่ระบบ</RouterLink>
       </section>
     </main>
+
+    <Teleport to="body">
+      <div v-if="policy" class="policy-overlay" @click.self="closePolicy">
+        <section
+          class="policy-dialog"
+          role="dialog"
+          aria-modal="true"
+          :aria-labelledby="`policy-${policy}`"
+        >
+          <header class="policy-dialog__header">
+            <h2 :id="`policy-${policy}`">{{ POLICIES[policy].title }}</h2>
+            <button type="button" class="policy-dialog__close" aria-label="ปิด" @click="closePolicy">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M6.4 18.308 5.692 17.6 11.292 12 5.692 6.4 6.4 5.692 12 11.292 17.6 5.692 18.308 6.4 12.708 12 18.308 17.6 17.6 18.308 12 12.708 6.4 18.308Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+          </header>
+          <div class="policy-dialog__body">
+            <p v-for="paragraph in POLICIES[policy].paragraphs" :key="paragraph">{{ paragraph }}</p>
+          </div>
+        </section>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -189,11 +269,75 @@ async function handleSubmit(): Promise<void> {
   color: var(--gray-900);
 }
 
-.auth-terms a {
+.auth-terms__link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
   font-weight: var(--font-weight-semibold);
   color: var(--blue-600);
   text-decoration: underline;
   text-underline-offset: 0.125rem;
+  cursor: pointer;
+}
+
+.policy-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgb(0 28 89 / 0.55);
+}
+
+.policy-dialog {
+  box-sizing: border-box;
+  width: min(100%, 480px);
+  background: var(--white);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius);
+}
+
+.policy-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 20px 16px 0 24px;
+}
+
+.policy-dialog h2 {
+  margin: 0;
+  color: var(--blue-950);
+  font-size: var(--headline-3-size);
+  font-weight: var(--font-weight-medium);
+}
+
+.policy-dialog__close {
+  display: flex;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  color: var(--gray-600);
+  cursor: pointer;
+}
+
+.policy-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px 24px;
+}
+
+.policy-dialog__body p {
+  margin: 0;
+  color: var(--gray-900);
+  font-size: var(--body-3-size);
+  line-height: var(--line-height);
 }
 
 .auth-form .btn--primary {
