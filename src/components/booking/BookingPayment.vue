@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { createCardToken } from '@/services/omise'
-import { createCharge } from '@/services/paymentApi'
+import { createCharge, type BookingCharge } from '@/services/paymentApi'
 
 const props = withDefaults(
   defineProps<{
     totalPrice?: number
+    booking: BookingCharge
   }>(),
   { totalPrice: 0 },
 )
@@ -123,7 +124,7 @@ async function submit(): Promise<boolean> {
       expirationYear: 2000 + Number(expiryYear),
       securityCode: card.cvv,
     })
-    const charge = await createCharge(token, props.totalPrice, 'HomeServices booking')
+    const charge = await createCharge(token, props.totalPrice, props.booking, 'HomeServices booking')
     if (!charge.paid || charge.status !== 'successful') {
       submitError.value = 'การชำระเงินไม่สำเร็จ กรุณาตรวจสอบบัตรหรือลองใหม่อีกครั้ง'
       return false

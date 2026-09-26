@@ -13,9 +13,17 @@ type ChargeApiResponse = {
   data: ChargeResult
 }
 
+export type BookingCharge = {
+  serviceId: number
+  address: string
+  scheduledAt: string
+  items: { optionId: number; quantity: number }[]
+}
+
 export async function createCharge(
   token: string,
   amountBaht: number,
+  booking: BookingCharge,
   description?: string,
 ): Promise<ChargeResult> {
   if (!token || typeof token !== 'string') {
@@ -34,7 +42,7 @@ export async function createCharge(
 
   const response = await apiFetch<ChargeApiResponse>('/api/charges', {
     method: 'POST',
-    body: JSON.stringify({ token, amount, description }),
+    body: JSON.stringify({ token, amount, description, ...booking }),
   })
 
   if (!response || !response.data) {
