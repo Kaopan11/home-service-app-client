@@ -257,6 +257,12 @@ async function goNext(): Promise<void> {
       v-model:method="paymentMethod"
       v-model:valid="paymentValid"
       :total-price="draft.totalPrice"
+      :booking="{
+        serviceId: Number(serviceId),
+        address: formattedAddress,
+        scheduledAt: customer.date && customer.time ? `${customer.date}T${customer.time}:00` : '',
+        items: draft.items.map((item) => ({ optionId: Number(item.id), quantity: item.quantity })),
+      }"
     />
 
     <template #summary>
