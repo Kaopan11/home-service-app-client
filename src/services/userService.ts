@@ -75,12 +75,15 @@ export async function updateUserProfile(payload: UpdateUserProfileRequest): Prom
   return merged
 }
 
-export function formatAddressSummary(addr: Partial<UserAddress>): string {
+export function formatAddressSummary(
+  addr: Partial<UserAddress> & { postalCode?: string },
+): string {
   const parts = [
     addr.address?.trim(),
     addr.subdistrict?.trim(),
     addr.district?.trim(),
     addr.province?.trim(),
+    addr.postalCode?.trim(),
   ].filter(Boolean)
   return parts.join(' ')
 }

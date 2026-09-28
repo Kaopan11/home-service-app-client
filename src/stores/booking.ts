@@ -9,6 +9,7 @@ export type BookingCustomerInfo = {
   subdistrict: string
   district: string
   province: string
+  postalCode: string
   note: string
 }
 
@@ -30,6 +31,7 @@ const EMPTY_CUSTOMER: BookingCustomerInfo = {
   subdistrict: '',
   district: '',
   province: '',
+  postalCode: '',
   note: '',
 }
 
@@ -37,7 +39,10 @@ function readDraft(): BookingDraft | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    return JSON.parse(raw) as BookingDraft
+    const draft = JSON.parse(raw) as BookingDraft
+    if (!draft?.customer) return null
+    draft.customer = { ...EMPTY_CUSTOMER, ...draft.customer }
+    return draft
   } catch {
     return null
   }
