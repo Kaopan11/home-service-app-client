@@ -67,6 +67,16 @@ watch(
   { immediate: true },
 )
 
+function isWaitingStaff(order: OrderCard): boolean {
+  return !order.staff && order.status === 'pending'
+}
+
+function staffLabel(order: OrderCard): string {
+  if (order.staff) return order.staff
+  if (order.status === 'pending') return 'กำลังรอช่างรับงาน'
+  return '-'
+}
+
 function statusClass(status: OrderStatus): string {
   if (status === 'progress') return 'status status--progress'
   if (status === 'done') return 'status status--done'
@@ -198,7 +208,8 @@ onUnmounted(() => {
         </p>
         <p class="card-order__staff">
           <img class="icon" :src="icons.customerServices.person" alt="" width="20" height="20" />
-          พนักงาน: {{ order.staff }}
+          <span v-if="isWaitingStaff(order)" class="staff-waiting">กำลังรอช่างรับงาน</span>
+          <span v-else>พนักงาน: {{ order.staff || '-' }}</span>
         </p>
         <p class="card-order__price">
           ราคารวม:
@@ -282,9 +293,9 @@ onUnmounted(() => {
                 <dt>เวลา</dt>
                 <dd>{{ detailWhen.time }}</dd>
               </div>
-              <div v-if="selected.staff">
+              <div>
                 <dt>ช่างที่มารับงาน</dt>
-                <dd>{{ selected.staff }}</dd>
+                <dd :class="{ 'staff-waiting': isWaitingStaff(selected) }">{{ staffLabel(selected) }}</dd>
               </div>
               <div v-if="detailAddress">
                 <dt>สถานที่</dt>
@@ -362,6 +373,11 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.staff-waiting {
+  color: var(--blue-700);
+  font-weight: var(--font-weight-medium);
 }
 
 .orders-empty {
