@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import NotificationBell from '@/components/admin/NotificationBell.vue'
 import { icons } from '@/constants/icons'
 import { useAuthStore } from '@/stores/auth'
 
@@ -61,7 +60,6 @@ async function handleLogout(): Promise<void> {
     <div class="admin-main">
       <header class="admin-topbar">
         <slot name="topbar" />
-        <NotificationBell />
       </header>
       <section class="admin-content">
         <slot />

@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import TechnicianLayout from '@/components/technician/TechnicianLayout.vue'
 import SelectDropdown from '@/components/ui/SelectDropdown.vue'
 import { icons } from '@/constants/icons'
-import { MOCK_HISTORY_JOBS } from '@/data/technicianJobsData'
 import { getTechnicianHistoryJobs } from '@/services/technician'
 import type { TechnicianJobItem } from '@/types/technician'
 import { formatThaiCurrency, formatThaiDateTime } from '@/utils/technicianFormatters'
@@ -26,9 +25,10 @@ async function loadJobs(): Promise<void> {
   error.value = ''
   try {
     const data = await getTechnicianHistoryJobs()
-    jobs.value = data && data.length > 0 ? data : MOCK_HISTORY_JOBS
+    jobs.value = data ?? []
   } catch {
-    jobs.value = MOCK_HISTORY_JOBS
+    error.value = 'ไม่สามารถโหลดประวัติการซ่อมได้'
+    jobs.value = []
   } finally {
     loading.value = false
   }
@@ -199,7 +199,8 @@ function goDetail(id: number): void {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 1280px;
+  width: 100%;
+  max-width: 1120px;
 }
 
 .filter-bar {
@@ -226,10 +227,9 @@ function goDetail(id: number): void {
 
 .table-wrap {
   background: var(--white);
-  border: 1px solid var(--gray-200);
+  border: 1px solid var(--gray-300);
   border-radius: 8px;
   overflow-x: auto;
-  box-shadow: var(--shadow-sm);
 }
 
 .history-table {

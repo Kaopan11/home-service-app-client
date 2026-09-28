@@ -1,6 +1,6 @@
 export type NotificationItem = {
   id: number
-  type: 'JOB_CREATED' | 'JOB_ACCEPTED' | 'JOB_COMPLETED' | 'JOB_CANCELLED'
+  type: 'JOB_CREATED' | 'JOB_ACCEPTED' | 'JOB_COMPLETED' | 'JOB_CANCELLED' | 'JOB_REVIEWED'
   title: string
   body: string
   jobId: number | null

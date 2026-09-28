@@ -1,22 +1,43 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { icons } from '@/constants/icons'
 import { formatAdminDateTime } from '@/data/adminServices'
 import { getUnreadCount, listNotifications, markNotificationRead } from '@/services/notifications'
 import type { NotificationItem } from '@/types/notification'
 
+const props = withDefaults(
+  defineProps<{
+    variant?: 'header' | 'admin' | 'technician'
+  }>(),
+  { variant: 'admin' },
+)
+
+const wrapEl = ref<HTMLElement | null>(null)
 const open = ref(false)
 const unreadCount = ref(0)
 const items = ref<NotificationItem[]>([])
 const loading = ref(false)
 
-onMounted(refreshUnreadCount)
+onMounted(() => {
+  void refreshUnreadCount()
+  document.addEventListener('click', closeIfOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeIfOutside)
+})
+
+function closeIfOutside(event: MouseEvent): void {
+  if (!wrapEl.value?.contains(event.target as Node)) {
+    open.value = false
+  }
+}
 
 async function refreshUnreadCount(): Promise<void> {
   try {
     unreadCount.value = await getUnreadCount()
   } catch {
-    // ponytail: silently ignore, bell just shows 0 — no toast infra wired yet
+    unreadCount.value = 0
   }
 }
 
@@ -35,7 +56,7 @@ async function toggleOpen(): Promise<void> {
   }
 }
 
-async function handleRead(item: NotificationItem): Promise<void> {
+async function markReadOnHover(item: NotificationItem): Promise<void> {
   if (item.read) {
     return
   }
@@ -44,19 +65,36 @@ async function handleRead(item: NotificationItem): Promise<void> {
     item.read = true
     await refreshUnreadCount()
   } catch {
-    // ponytail: best-effort mark-as-read, ignore failure
+    // ponytail: best-effort mark-as-read
   }
 }
 </script>
 
 <template>
-  <div class="bell-wrap">
-    <button type="button" class="bell-btn" aria-label="การแจ้งเตือน" @click="toggleOpen">
-      <img :src="icons.notification.outline" width="24" height="24" alt="" />
+  <div
+    ref="wrapEl"
+    class="bell-wrap"
+    :class="{ 'bell-wrap--admin': variant === 'admin' || variant === 'technician' }"
+  >
+    <button
+      type="button"
+      :class="variant === 'header' ? 'btn-icon' : 'bell-btn'"
+      :aria-pressed="open"
+      aria-label="การแจ้งเตือน"
+      @click.stop="toggleOpen"
+    >
+      <img
+        v-if="variant === 'admin' || variant === 'technician'"
+        :src="icons.notification.outline"
+        width="24"
+        height="24"
+        alt=""
+      />
       <span v-if="unreadCount > 0" class="badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
     </button>
 
     <div v-if="open" class="dropdown">
+      <p class="dropdown-title">การแจ้งเตือน</p>
       <p v-if="loading" class="status">กำลังโหลด...</p>
       <p v-else-if="!items.length" class="status">ไม่มีการแจ้งเตือน</p>
       <ul v-else class="list">
@@ -65,7 +103,7 @@ async function handleRead(item: NotificationItem): Promise<void> {
           :key="item.id"
           class="item"
           :class="{ 'item--unread': !item.read }"
-          @click="handleRead(item)"
+          @mouseenter="markReadOnHover(item)"
         >
           <p class="item-title">{{ item.title }}</p>
           <p class="item-body">{{ item.body }}</p>
@@ -81,6 +119,10 @@ async function handleRead(item: NotificationItem): Promise<void> {
   position: relative;
 }
 
+.bell-wrap--admin {
+  margin-left: auto;
+}
+
 .bell-btn {
   position: relative;
   display: grid;
@@ -94,20 +136,28 @@ async function handleRead(item: NotificationItem): Promise<void> {
   cursor: pointer;
 }
 
+.btn-icon {
+  position: relative;
+}
+
 .badge {
   position: absolute;
   top: 0;
   right: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   min-width: 20px;
   height: 20px;
   padding: 0 4px;
   border-radius: 100px;
   background: #c82438;
   color: #f1f1f1;
-  font-size: 12px;
-  line-height: 1;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  z-index: 1;
 }
 
 .dropdown {
@@ -122,7 +172,16 @@ async function handleRead(item: NotificationItem): Promise<void> {
   border-radius: 8px;
   background: var(--white);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  z-index: 20;
+  z-index: 50;
+}
+
+.dropdown-title {
+  margin: 0;
+  padding: 8px 12px 4px;
+  color: #323640;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .status {
@@ -145,7 +204,6 @@ async function handleRead(item: NotificationItem): Promise<void> {
 .item {
   padding: 10px 12px;
   border-radius: 8px;
-  cursor: pointer;
 }
 
 .item:hover {
@@ -158,15 +216,17 @@ async function handleRead(item: NotificationItem): Promise<void> {
 
 .item-title {
   margin: 0 0 2px;
-  color: var(--gray-800);
-  font-size: 14px;
-  font-weight: var(--font-weight-medium);
+  color: #323640;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .item-body {
   margin: 0 0 4px;
-  color: var(--gray-700);
-  font-size: 13px;
+  color: #646c80;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .item-date {

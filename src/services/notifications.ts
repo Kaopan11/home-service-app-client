@@ -3,7 +3,16 @@ import type { NotificationItem, NotificationListResponse, UnreadCountResponse } 
 
 export async function listNotifications(): Promise<NotificationItem[]> {
   const response = await apiFetch<NotificationListResponse>('/api/notifications')
-  return response.data ?? []
+  return (response.data ?? []).map(mapNotification)
+}
+
+function mapNotification(item: NotificationItem): NotificationItem {
+  const raw = item as NotificationItem & { job_id?: number | null; created_at?: string }
+  return {
+    ...item,
+    jobId: item.jobId ?? raw.job_id ?? null,
+    createdAt: item.createdAt ?? raw.created_at ?? '',
+  }
 }
 
 export async function getUnreadCount(): Promise<number> {

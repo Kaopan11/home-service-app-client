@@ -5,16 +5,19 @@ import CustomerAccountLayout from '@/components/layout/CustomerAccountLayout.vue
 import { icons } from '@/constants/icons'
 import { apiFetch } from '@/services/api'
 import { formatAddressSummary, getSavedUserAddress } from '@/services/userService'
+import { isApiError } from '@/types/auth'
 
 type OrderStatus = 'pending' | 'progress' | 'done'
 
 type OrderCard = {
+  jobId: number
   code: string
   status: OrderStatus
   datetime: string
   staff: string
   items: string[]
   total: string
+  rating: number | null
 }
 
 type DetailLine = {
@@ -33,6 +36,11 @@ const isHistory = computed(() => route.name === 'user-history')
 const orders = ref<OrderCard[]>([])
 const loaded = ref(false)
 const selected = ref<OrderCard | null>(null)
+const reviewing = ref<OrderCard | null>(null)
+const reviewRating = ref(0)
+const reviewComment = ref('')
+const reviewSaving = ref(false)
+const reviewError = ref('')
 const showDetail = computed(() => !isHistory.value)
 const detailWhen = computed(() => splitWhen(selected.value?.datetime ?? ''))
 const detailItems = computed(() => (selected.value?.items ?? []).map(splitItem))
@@ -90,14 +98,71 @@ function closeDetail(): void {
 }
 
 function onKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape' && selected.value) {
+  if (event.key !== 'Escape') {
+    return
+  }
+  if (reviewing.value && !reviewSaving.value) {
+    closeReview()
+    return
+  }
+  if (selected.value) {
     closeDetail()
   }
 }
 
-watch(selected, (order) => {
-  document.body.style.overflow = order ? 'hidden' : ''
-})
+function openReview(order: OrderCard): void {
+  reviewing.value = order
+  reviewRating.value = 0
+  reviewComment.value = ''
+  reviewError.value = ''
+}
+
+function closeReview(): void {
+  if (reviewSaving.value) {
+    return
+  }
+  reviewing.value = null
+}
+
+async function submitReview(): Promise<void> {
+  const order = reviewing.value
+  if (!order || reviewSaving.value) {
+    return
+  }
+  if (reviewRating.value < 1) {
+    reviewError.value = 'กรุณาเลือกคะแนน 1 ถึง 5 ดาว'
+    return
+  }
+  reviewSaving.value = true
+  reviewError.value = ''
+  try {
+    const response = await apiFetch<{ data: OrderCard[] }>(`/api/orders/${order.jobId}/review`, {
+      method: 'POST',
+      body: JSON.stringify({
+        rating: reviewRating.value,
+        comment: reviewComment.value.trim() || null,
+      }),
+    })
+    const saved = response.data?.[0]
+    orders.value = orders.value.map((item) =>
+      item.jobId === order.jobId
+        ? { ...item, rating: saved?.rating ?? reviewRating.value }
+        : item,
+    )
+    reviewing.value = null
+  } catch (err) {
+    reviewError.value = isApiError(err) ? err.message : 'ไม่สามารถส่งรีวิวได้'
+  } finally {
+    reviewSaving.value = false
+  }
+}
+
+watch(
+  [selected, reviewing],
+  ([order, review]) => {
+    document.body.style.overflow = order || review ? 'hidden' : ''
+  },
+)
 
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
@@ -153,6 +218,31 @@ onUnmounted(() => {
         >
           ดูรายละเอียด
         </button>
+        <button
+          v-else-if="!order.rating"
+          class="btn btn--primary card-order__action"
+          type="button"
+          @click="openReview(order)"
+        >
+          ให้คะแนน
+        </button>
+        <p v-else class="card-order__reviewed" aria-label="คะแนนที่ให้ไว้">
+          <svg
+            v-for="star in 5"
+            :key="star"
+            class="star"
+            :class="{ 'star--on': (order.rating ?? 0) >= star }"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <polygon
+              points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+            />
+          </svg>
+        </p>
       </article>
     </section>
 
@@ -207,6 +297,60 @@ onUnmounted(() => {
               <strong>{{ selected.total }}</strong>
             </p>
           </section>
+        </article>
+      </div>
+    </Teleport>
+
+    <Teleport to="body">
+      <div v-if="reviewing" class="overlay" @click.self="closeReview">
+        <article
+          class="review-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="review-title"
+        >
+          <button class="order-detail__close" type="button" aria-label="ปิด" :disabled="reviewSaving" @click="closeReview">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M6.4 18.308 5.692 17.6 11.292 12 5.692 6.4 6.4 5.692 12 11.292 17.6 5.692 18.308 6.4 12.708 12 18.308 17.6 17.6 18.308 12 12.708 6.4 18.308Z"
+                fill="currentColor"
+              />
+            </svg>
+          </button>
+          <h2 id="review-title">ให้คะแนนความพึงพอใจ</h2>
+          <p class="review-dialog__code">{{ reviewing.code }}</p>
+          <div class="review-stars" role="radiogroup" aria-label="คะแนน">
+            <button
+              v-for="star in 5"
+              :key="star"
+              type="button"
+              class="review-star"
+              :class="{ 'review-star--on': reviewRating >= star }"
+              :aria-checked="reviewRating === star"
+              role="radio"
+              :aria-label="`${star} ดาว`"
+              @click="reviewRating = star"
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                />
+              </svg>
+            </button>
+          </div>
+          <label class="review-comment">
+            ความคิดเห็น
+            <textarea v-model="reviewComment" rows="4" maxlength="500" placeholder="บอกความรู้สึกเกี่ยวกับบริการ (ไม่บังคับ)" />
+          </label>
+          <p v-if="reviewError" class="review-error" role="alert">{{ reviewError }}</p>
+          <div class="review-actions">
+            <button type="button" class="btn btn--secondary" :disabled="reviewSaving" @click="closeReview">
+              ยกเลิก
+            </button>
+            <button type="button" class="btn btn--primary" :disabled="reviewSaving" @click="submitReview">
+              {{ reviewSaving ? 'กำลังส่ง...' : 'ส่งรีวิว' }}
+            </button>
+          </div>
         </article>
       </div>
     </Teleport>
@@ -374,6 +518,99 @@ onUnmounted(() => {
 .order-detail__total strong {
   color: var(--black);
   font-weight: var(--font-weight-semibold);
+}
+
+.card-order__reviewed {
+  grid-area: action;
+  justify-self: end;
+  align-self: end;
+  display: flex;
+  gap: 2px;
+  margin: 0;
+}
+
+.star {
+  color: var(--gray-300);
+}
+
+.star--on {
+  color: #f4b400;
+}
+
+.review-dialog {
+  position: relative;
+  box-sizing: border-box;
+  width: min(100%, 420px);
+  padding: 40px 32px 32px;
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 2px 2px 24px rgb(23 51 106 / 0.12);
+}
+
+.review-dialog h2 {
+  margin: 0;
+  color: var(--gray-950);
+  font-size: var(--headline-4-size, 20px);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+}
+
+.review-dialog__code {
+  margin: 8px 0 20px;
+  color: var(--gray-600);
+  font-size: var(--body-3-size);
+  text-align: center;
+}
+
+.review-stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.review-star {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--gray-300);
+  cursor: pointer;
+}
+
+.review-star--on {
+  color: #f4b400;
+}
+
+.review-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--gray-700);
+  font-size: var(--body-3-size);
+}
+
+.review-comment textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  font: inherit;
+  resize: vertical;
+}
+
+.review-error {
+  margin: 12px 0 0;
+  color: #c82438;
+  font-size: 14px;
+  text-align: center;
+}
+
+.review-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
 }
 
 @media (max-width: 768px) {

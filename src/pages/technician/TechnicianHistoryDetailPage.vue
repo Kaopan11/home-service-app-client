@@ -162,7 +162,7 @@ function openMap(): void {
                   v-for="star in 5"
                   :key="star"
                   class="star-icon"
-                  :class="{ 'star-icon--filled': (job.rating || 5) >= star }"
+                  :class="{ 'star-icon--filled': (job.rating ?? 0) >= star }"
                   width="22"
                   height="22"
                   viewBox="0 0 24 24"
@@ -179,7 +179,11 @@ function openMap(): void {
           <div class="detail-row">
             <span class="label">ความคิดเห็นจากผู้รับบริการ</span>
             <span class="value feedback-comment">
-              {{ job.reviewComment || 'ไม่มีความคิดเห็นเพิ่มเติมจากผู้รับบริการ' }}
+              {{
+                job.rating
+                  ? job.reviewComment || 'ไม่มีความคิดเห็นเพิ่มเติมจากผู้รับบริการ'
+                  : 'ยังไม่มีรีวิวจากผู้รับบริการ'
+              }}
             </span>
           </div>
         </div>
