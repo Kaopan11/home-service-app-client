@@ -14,6 +14,13 @@ const props = withDefaults(
 const method = defineModel<'promptpay' | 'card'>('method', { default: 'card' })
 const valid = defineModel<boolean>('valid', { default: false })
 
+type CardBrand = 'visa' | 'mastercard'
+
+const CARD_NUMBER_LENGTH = 16
+const CVV_LENGTH = 3
+
+const cardBrand = ref<CardBrand>('visa')
+
 const card = reactive({
   number: '',
   name: '',
@@ -28,7 +35,7 @@ const submitting = ref(false)
 const submitError = ref('')
 
 function formatCardNumber(event: Event) {
-  const digits = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 19)
+  const digits = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, CARD_NUMBER_LENGTH)
   card.number = digits.replace(/(.{4})/g, '$1 ').trim()
 }
 
@@ -38,8 +45,21 @@ function formatExpiry(event: Event) {
 }
 
 function formatCvv(event: Event) {
-  card.cvv = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 4)
+  card.cvv = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, CVV_LENGTH)
 }
+
+// Visa starts with 4; Mastercard uses 51–55 or 2221–2720.
+function matchesBrand(num: string, brand: CardBrand): boolean {
+  if (brand === 'visa') return num.startsWith('4')
+  const prefix2 = Number(num.slice(0, 2))
+  const prefix4 = Number(num.slice(0, 4))
+  return (prefix2 >= 51 && prefix2 <= 55) || (prefix4 >= 2221 && prefix4 <= 2720)
+}
+
+const brandMismatch = computed(() => {
+  const cardNumber = card.number.replace(/\s/g, '')
+  return cardNumber.length >= 4 && !matchesBrand(cardNumber, cardBrand.value)
+})
 
 function luhnCheck(num: string): boolean {
   const digits = num.replace(/\D/g, '')
@@ -72,7 +92,8 @@ function applyPromo() {
 
 const isCardValid = computed(() => {
   const cardNumber = card.number.replace(/\s/g, '')
-  if (cardNumber.length < 13 || cardNumber.length > 19) return false
+  if (cardNumber.length !== CARD_NUMBER_LENGTH) return false
+  if (!matchesBrand(cardNumber, cardBrand.value)) return false
   if (!luhnCheck(cardNumber)) return false
   if (card.name.trim().length === 0) return false
   if (!/^\d{2}\/\d{2}$/.test(card.expiry)) return false
@@ -81,7 +102,7 @@ const isCardValid = computed(() => {
   if (month < 1 || month > 12) return false
   if (isCardExpired(month, year)) return false
 
-  if (card.cvv.length < 3 || card.cvv.length > 4) return false
+  if (card.cvv.length !== CVV_LENGTH) return false
   return true
 })
 
@@ -160,6 +181,33 @@ defineExpose({ submit, submitting })
     </div>
 
     <div v-if="method === 'card'" class="payment__form">
+      <div class="field">
+        <span>ประเภทบัตร<em>*</em></span>
+        <div class="payment__brands" role="radiogroup" aria-label="ประเภทบัตร">
+          <label class="select-box">
+            <input
+              v-model="cardBrand"
+              type="radio"
+              name="card-brand"
+              value="visa"
+              :disabled="submitting"
+            />
+            <span class="payment__brand payment__brand--visa">VISA</span>
+          </label>
+          <label class="select-box">
+            <input
+              v-model="cardBrand"
+              type="radio"
+              name="card-brand"
+              value="mastercard"
+              :disabled="submitting"
+            />
+            <span class="payment__brand-mc" aria-hidden="true"><i></i><i></i></span>
+            <span class="payment__brand">Mastercard</span>
+          </label>
+        </div>
+      </div>
+
       <label class="field">
         <span>หมายเลขบัตรเครดิต<em>*</em></span>
         <input
@@ -167,12 +215,15 @@ defineExpose({ submit, submitting })
           type="text"
           inputmode="numeric"
           autocomplete="cc-number"
-          maxlength="23"
+          maxlength="19"
           placeholder="กรุณากรอกหมายเลขบัตร"
           :disabled="submitting"
           @input="formatCardNumber"
         />
       </label>
+      <p v-if="brandMismatch" class="payment__error" role="alert">
+        หมายเลขบัตรไม่ตรงกับประเภทบัตร {{ cardBrand === 'visa' ? 'Visa' : 'Mastercard' }} ที่เลือก
+      </p>
 
       <label class="field">
         <span>ชื่อบนบัตร<em>*</em></span>
@@ -206,7 +257,7 @@ defineExpose({ submit, submitting })
             type="text"
             inputmode="numeric"
             autocomplete="cc-csc"
-            maxlength="4"
+            maxlength="3"
             placeholder="xxx"
             :disabled="submitting"
             @input="formatCvv"
@@ -281,6 +332,46 @@ defineExpose({ submit, submitting })
 .payment__row {
   display: flex;
   gap: 1.25rem;
+}
+
+.payment__brands {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+
+.payment__brands .select-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.payment__brand {
+  font-weight: var(--font-weight-medium);
+}
+
+.payment__brand--visa {
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #1a1f71;
+}
+
+.payment__brand-mc {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.payment__brand-mc i {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: #eb001b;
+}
+
+.payment__brand-mc i + i {
+  margin-left: -0.4rem;
+  background: #f79e1b;
+  opacity: 0.9;
 }
 
 .payment__row .field {
