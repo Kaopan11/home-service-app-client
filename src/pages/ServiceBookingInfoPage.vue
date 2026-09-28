@@ -43,6 +43,7 @@ const customer = ref<BookingCustomerInfo>({
   subdistrict: '',
   district: '',
   province: '',
+  postalCode: '',
   note: '',
 })
 
@@ -53,6 +54,7 @@ const errors = reactive({
   subdistrict: '',
   district: '',
   province: '',
+  postalCode: '',
 })
 
 const draft = computed(() => bookingStore.draft)
@@ -77,6 +79,7 @@ const formattedAddress = computed(() =>
     subdistrict: customer.value.subdistrict,
     district: customer.value.district,
     province: customer.value.province,
+    postalCode: customer.value.postalCode,
   }),
 )
 
@@ -87,7 +90,8 @@ const infoComplete = computed(
     Boolean(customer.value.address.trim()) &&
     Boolean(customer.value.province) &&
     Boolean(customer.value.district) &&
-    Boolean(customer.value.subdistrict),
+    Boolean(customer.value.subdistrict) &&
+    /^\d{5}$/.test(customer.value.postalCode),
 )
 
 const canContinue = computed(() =>
@@ -103,7 +107,10 @@ function applyDraft(): boolean {
   if (!bookingStore.matchesService(serviceId.value) || !bookingStore.draft) {
     return false
   }
-  customer.value = { ...bookingStore.draft.customer }
+  customer.value = {
+    ...bookingStore.draft.customer,
+    postalCode: bookingStore.draft.customer.postalCode ?? '',
+  }
   return true
 }
 
@@ -128,6 +135,7 @@ function validate(): boolean {
   errors.province = customer.value.province ? '' : 'กรุณาเลือกจังหวัด'
   errors.district = customer.value.district ? '' : 'กรุณาเลือกเขต / อำเภอ'
   errors.subdistrict = customer.value.subdistrict ? '' : 'กรุณาเลือกแขวง / ตำบล'
+  errors.postalCode = /^\d{5}$/.test(customer.value.postalCode) ? '' : 'กรุณากรอกรหัสไปรษณีย์ 5 หลัก'
   return !Object.values(errors).some(Boolean)
 }
 

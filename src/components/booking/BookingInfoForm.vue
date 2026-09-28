@@ -3,7 +3,7 @@ import { computed, watch } from 'vue'
 import DatePicker from '@/components/ui/DatePicker.vue'
 import TimePicker from '@/components/ui/TimePicker.vue'
 import SelectDropdown from '@/components/ui/SelectDropdown.vue'
-import { getDistricts, getProvinces, getSubdistricts } from '@/data/thaiAddress'
+import { getDistricts, getPostalCode, getProvinces, getSubdistricts } from '@/data/thaiAddress'
 import type { BookingCustomerInfo } from '@/stores/booking'
 
 const customer = defineModel<BookingCustomerInfo>({ required: true })
@@ -16,6 +16,7 @@ const props = defineProps<{
     subdistrict: string
     district: string
     province: string
+    postalCode: string
   }
 }>()
 
@@ -85,6 +86,31 @@ function onSubdistrictChange(subdistrict: string) {
   customer.value = { ...customer.value, subdistrict }
   emit('clearError', 'subdistrict')
 }
+
+function onPostalCodeInput(event: Event) {
+  const digits = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 5)
+  customer.value = { ...customer.value, postalCode: digits }
+  emit('clearError', 'postalCode')
+}
+
+watch(
+  () => `${customer.value.province}|${customer.value.district}|${customer.value.subdistrict}`,
+  (area, previous) => {
+    const [province, district, subdistrict] = area.split('|')
+    const next = getPostalCode(province, district, subdistrict)
+    if (next) {
+      if (customer.value.postalCode !== next) {
+        customer.value = { ...customer.value, postalCode: next }
+        emit('clearError', 'postalCode')
+      }
+      return
+    }
+    if (previous != null && customer.value.postalCode) {
+      customer.value = { ...customer.value, postalCode: '' }
+    }
+  },
+  { immediate: true },
+)
 
 watch(
   () => customer.value.address,
@@ -170,6 +196,25 @@ watch(
           @update:model-value="onProvinceChange"
         />
         <p v-if="errors.province" class="field__error">{{ errors.province }}</p>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="booking-postal-code">
+          รหัสไปรษณีย์<span class="required" aria-hidden="true">*</span>
+        </label>
+        <input
+          id="booking-postal-code"
+          class="field__input"
+          :class="{ 'field__input--error': errors.postalCode }"
+          :value="customer.postalCode"
+          type="text"
+          inputmode="numeric"
+          maxlength="5"
+          autocomplete="postal-code"
+          placeholder="รหัสไปรษณีย์"
+          @input="onPostalCodeInput"
+        />
+        <p v-if="errors.postalCode" class="field__error">{{ errors.postalCode }}</p>
       </div>
 
       <div class="field field--full">
