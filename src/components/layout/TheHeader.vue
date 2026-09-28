@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import NotificationBell from '@/components/admin/NotificationBell.vue'
 import { icons } from '@/constants/icons'
 import { USER_PROFILE_STORAGE_KEY } from '@/services/userService'
 import { useAuthStore } from '@/stores/auth'
@@ -180,7 +181,7 @@ const userInitial = computed(() => userName.value.trim().charAt(0).toUpperCase()
               </ul>
             </nav>
           </div>
-          <button class="btn-icon" type="button" aria-label="การแจ้งเตือน"></button>
+          <NotificationBell variant="header" />
         </template>
       </div>
     </div>
