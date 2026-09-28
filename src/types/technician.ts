@@ -38,6 +38,10 @@ export type TechnicianRequest = {
   longitude: number | null
   status: string
   createdAt: string
+  orderCode: string
+  itemsDescription: string
+  scheduledAt: string
+  totalPrice: number
 }
 
 export type UpdateTechnicianProfileRequest = {
