@@ -12,6 +12,7 @@ import {
 } from '@/services/technician'
 import { icons } from '@/constants/icons'
 import { useTechnicianJobsStore } from '@/stores/technicianJobs'
+import { formatThaiCurrency, formatThaiDateTime } from '@/utils/technicianFormatters'
 import { isApiError } from '@/types/auth'
 import type { TechnicianProfile, TechnicianRequest } from '@/types/technician'
 
@@ -169,23 +170,6 @@ async function handleDecline(id: number): Promise<void> {
   }
 }
 
-function formatWhen(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return '-'
-  }
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear() + 543
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${day}/${month}/${year} เวลา ${hours}.${minutes} น.`
-}
-
-function orderCode(id: number): string {
-  return `ADO${String(id).padStart(7, '0')}`
-}
-
 function mapHref(request: TechnicianRequest): string {
   if (request.latitude != null && request.longitude != null) {
     return `https://www.google.com/maps?q=${request.latitude},${request.longitude}`
@@ -242,7 +226,7 @@ function mapHref(request: TechnicianRequest): string {
           <h2>{{ request.serviceName }}</h2>
           <p class="request__when">
             <span>วันเวลาดำเนินการ</span>
-            {{ formatWhen(request.createdAt) }}
+            {{ formatThaiDateTime(request.scheduledAt) }}
           </p>
         </header>
 
@@ -250,15 +234,15 @@ function mapHref(request: TechnicianRequest): string {
           <dl class="meta">
             <div>
               <dt>รายการ</dt>
-              <dd>{{ request.serviceName }}</dd>
+              <dd>{{ request.itemsDescription || request.serviceName }}</dd>
             </div>
             <div>
               <dt>รหัสคำสั่งซ่อม</dt>
-              <dd>{{ orderCode(request.id) }}</dd>
+              <dd>{{ request.orderCode }}</dd>
             </div>
             <div>
               <dt>ราคารวม</dt>
-              <dd>-</dd>
+              <dd>{{ formatThaiCurrency(request.totalPrice) }}</dd>
             </div>
             <div>
               <dt>สถานที่</dt>
@@ -297,7 +281,7 @@ function mapHref(request: TechnicianRequest): string {
     <AcceptJobConfirmation
       :open="Boolean(pendingAccept)"
       :service-name="pendingAccept?.serviceName ?? ''"
-      :scheduled-at="pendingAccept?.createdAt ?? ''"
+      :scheduled-at="pendingAccept?.scheduledAt || pendingAccept?.createdAt || ''"
       :loading="actingId !== null"
       @confirm="confirmAccept"
       @cancel="closeAcceptModal"
