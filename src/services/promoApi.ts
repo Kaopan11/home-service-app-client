@@ -1,6 +1,12 @@
 import { apiFetch } from '@/services/api'
 import { ApiError, isApiError } from '@/types/auth'
-import type { PromoDiscountType, PromotionApiEnvelope, PromotionDto, PromotionPayload } from '@/types/promo'
+import type {
+  ApplyPromoResult,
+  PromoDiscountType,
+  PromotionApiEnvelope,
+  PromotionDto,
+  PromotionPayload,
+} from '@/types/promo'
 
 const STORAGE_KEY = 'home-service.admin-promos'
 const NOT_FOUND_MESSAGE = 'ไม่พบข้อมูล Promotion Code'
@@ -161,6 +167,25 @@ function mockDelete(id: number): void {
     throw new ApiError(404, NOT_FOUND_MESSAGE)
   }
   persistMock(mockItems.filter((row) => row.promotion_id !== id))
+}
+
+export async function applyPromotionCode(code: string, amount: number): Promise<ApplyPromoResult> {
+  try {
+    const response = await apiFetch<PromotionApiEnvelope<ApplyPromoResult>>('/api/promotions/apply', {
+      method: 'POST',
+      body: JSON.stringify({ code, amount }),
+    })
+    const data = unwrap(response, 'ไม่สามารถใช้รหัสโปรโมชันได้')
+    return {
+      code: String(data.code ?? ''),
+      discount_type: normalizeType(data.discount_type),
+      discount_value: Number(data.discount_value ?? 0),
+      discount_amount: Number(data.discount_amount ?? 0),
+      payable_amount: Number(data.payable_amount ?? 0),
+    }
+  } catch (error) {
+    throw wrapError(error, 'ไม่สามารถใช้รหัสโปรโมชันได้')
+  }
 }
 
 export async function listPromotions(): Promise<PromotionDto[]> {

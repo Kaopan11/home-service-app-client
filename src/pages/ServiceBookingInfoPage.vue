@@ -30,6 +30,7 @@ const ready = ref(false)
 const step = ref<2 | 3>(2)
 
 const paymentMethod = ref<'promptpay' | 'card'>('card')
+const payableAmount = ref(0)
 const paymentValid = ref(false)
 const paymentConfirmed = ref(false)
 const receipt = ref<PaymentReceipt | null>(null)
@@ -58,6 +59,14 @@ const errors = reactive({
 })
 
 const draft = computed(() => bookingStore.draft)
+
+watch(
+  () => draft.value?.totalPrice,
+  (amount) => {
+    payableAmount.value = amount ?? 0
+  },
+  { immediate: true },
+)
 
 const formattedDate = computed(() => {
   if (!customer.value.date) return ''
@@ -169,6 +178,7 @@ async function goNext(): Promise<void> {
   if (step.value === 2) {
     if (!validate()) return
     bookingStore.updateCustomer(customer.value)
+    payableAmount.value = draft.value?.totalPrice ?? 0
     step.value = 3
     return
   }
@@ -177,7 +187,7 @@ async function goNext(): Promise<void> {
   if (ok) {
     receipt.value = {
       items: draft.value?.items ?? [],
-      totalPrice: draft.value?.totalPrice ?? 0,
+      totalPrice: payableAmount.value,
       date: formattedDate.value,
       time: formattedTime.value,
       address: formattedAddress.value,
@@ -265,6 +275,7 @@ async function goNext(): Promise<void> {
       v-model:method="paymentMethod"
       v-model:valid="paymentValid"
       :total-price="draft.totalPrice"
+      v-model:payable-amount="payableAmount"
       :booking="{
         serviceId: Number(serviceId),
         address: formattedAddress,
@@ -276,7 +287,7 @@ async function goNext(): Promise<void> {
     <template #summary>
       <BookingSummary
         :items="draft.items"
-        :total-price="draft.totalPrice"
+        :total-price="step === 3 ? payableAmount : draft.totalPrice"
         :scheduled-date="formattedDate"
         :scheduled-time="formattedTime"
         :address="formattedAddress"
