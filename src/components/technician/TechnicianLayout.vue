@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
+import NotificationBell from '@/components/admin/NotificationBell.vue'
 import { icons } from '@/constants/icons'
 import { useAuthStore } from '@/stores/auth'
 import { useTechnicianJobsStore } from '@/stores/technicianJobs'
@@ -28,7 +29,7 @@ async function handleLogout(): Promise<void> {
 <template>
   <div class="tech-shell">
     <aside class="tech-sidebar">
-      <RouterLink class="tech-sidebar__brand" :to="{ name: 'technician-account' }">
+      <RouterLink class="tech-sidebar__brand" :to="{ name: 'technician-requests' }">
         <img class="tech-sidebar__logo" :src="icons.admin.house" width="32" height="32" alt="" />
         <span>HomeServices</span>
       </RouterLink>
@@ -55,7 +56,7 @@ async function handleLogout(): Promise<void> {
           :to="{ name: 'technician-jobs' }"
         >
           <img :src="icons.navigation.list" width="24" height="24" alt="" />
-          <span>รายการคำสั่งซ่อม</span>
+          <span>รายการที่รอดำเนินการ</span>
         </RouterLink>
         <RouterLink
           class="tech-sidebar__link"
@@ -84,6 +85,7 @@ async function handleLogout(): Promise<void> {
     <div class="tech-main">
       <header class="tech-topbar">
         <slot name="topbar" />
+        <NotificationBell variant="technician" />
       </header>
       <section class="tech-content">
         <slot />
@@ -190,14 +192,14 @@ async function handleLogout(): Promise<void> {
   justify-content: center;
   min-width: 20px;
   height: 20px;
-  padding: 0 6px;
+  padding: 0 4px;
   margin-left: auto;
-  border-radius: 999px;
-  background: var(--red);
-  color: var(--white);
-  font-size: 12px;
-  font-weight: var(--font-weight-medium);
-  line-height: 1;
+  border-radius: 100px;
+  background: #c82438;
+  color: #f1f1f1;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
   flex-shrink: 0;
 }
 

@@ -1,12 +1,13 @@
 import { ApiError } from '@/types/auth'
 import { getStoredAccessToken } from '@/utils/authStorage'
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
 
 const PUBLIC_AUTH_PATHS = [
   '/api/auth/login',
   '/api/auth/logout',
   '/api/auth/register',
+  '/api/auth/facebook',
   '/api/services',
 ]
 
@@ -35,6 +36,9 @@ function defaultErrorMessage(status: number, path: string): string {
   if (status === 401 && path === '/api/auth/login') {
     return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'
   }
+  if (status === 401 && path === '/api/auth/facebook') {
+    return 'เข้าสู่ระบบด้วย Facebook ไม่สำเร็จ'
+  }
   if (status === 401) {
     return 'กรุณาเข้าสู่ระบบอีกครั้ง'
   }
@@ -45,7 +49,8 @@ function defaultErrorMessage(status: number, path: string): string {
 }
 
 async function redirectToLoginIfUnauthorized(path: string, status: number): Promise<void> {
-  if (status !== 401 || PUBLIC_AUTH_PATHS.includes(path)) {
+  const token = getStoredAccessToken()
+  if (status !== 401 || path.startsWith('/api/services') || PUBLIC_AUTH_PATHS.includes(path) || token?.startsWith('demo-')) {
     return
   }
 

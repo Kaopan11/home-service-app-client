@@ -16,6 +16,17 @@ const router = createRouter({
       component: () => import('@/pages/ServiceList.vue'),
     },
     {
+      path: '/service/:id',
+      name: 'service-detail',
+      component: () => import('@/pages/ServiceDetailPage.vue'),
+    },
+    {
+      path: '/service/:id/info',
+      name: 'service-booking-info',
+      component: () => import('@/pages/ServiceBookingInfoPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/pages/LoginPage.vue'),
@@ -28,9 +39,33 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/auth/callback',
+      name: 'auth-callback',
+      component: () => import('@/pages/FacebookCallbackPage.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/profile',
       name: 'user-profile',
       component: () => import('@/pages/UserProfilePage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/profile/password',
+      name: 'profile-password',
+      component: () => import('@/pages/ProfilePasswordPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/orders',
+      name: 'user-orders',
+      component: () => import('@/pages/UserOrdersPage.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/history',
+      name: 'user-history',
+      component: () => import('@/pages/UserOrdersPage.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -72,13 +107,19 @@ const router = createRouter({
     {
       path: '/admin/services/new',
       name: 'admin-service-new',
-      component: () => import('@/pages/admin/AdminPlaceholderPage.vue'),
+      component: () => import('@/pages/admin/AdminServiceFormPage.vue'),
       meta: { requiresAdmin: true },
     },
     {
       path: '/admin/services/:id/edit',
       name: 'admin-service-edit',
-      component: () => import('@/pages/admin/AdminPlaceholderPage.vue'),
+      component: () => import('@/pages/admin/AdminServiceFormPage.vue'),
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/services/:id',
+      name: 'admin-service-detail',
+      component: () => import('@/pages/admin/AdminServiceDetailPage.vue'),
       meta: { requiresAdmin: true },
     },
     {
@@ -107,25 +148,39 @@ const router = createRouter({
     },
     {
       path: '/technician',
-      redirect: { name: 'technician-account' },
+      redirect: { name: 'technician-requests' },
     },
     {
       path: '/technician/requests',
       name: 'technician-requests',
-      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
+      component: () => import('@/pages/technician/TechnicianRequestsPage.vue'),
       meta: { requiresTechnician: true, title: 'คำขอบริการซ่อม', active: 'requests' },
     },
     {
       path: '/technician/jobs',
       name: 'technician-jobs',
-      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
-      meta: { requiresTechnician: true, title: 'รายการคำสั่งซ่อม', active: 'jobs' },
+      alias: '/technician/pending',
+      component: () => import('@/pages/technician/TechnicianPendingPage.vue'),
+      meta: { requiresTechnician: true, title: 'รายการที่รอดำเนินการ', active: 'jobs' },
+    },
+    {
+      path: '/technician/jobs/:id',
+      name: 'technician-pending-detail',
+      alias: '/technician/pending/:id',
+      component: () => import('@/pages/technician/TechnicianPendingDetailPage.vue'),
+      meta: { requiresTechnician: true, title: 'รายละเอียดคำสั่งซ่อม', active: 'jobs' },
     },
     {
       path: '/technician/history',
       name: 'technician-history',
-      component: () => import('@/pages/technician/TechnicianPlaceholderPage.vue'),
+      component: () => import('@/pages/technician/TechnicianHistoryPage.vue'),
       meta: { requiresTechnician: true, title: 'ประวัติการซ่อม', active: 'history' },
+    },
+    {
+      path: '/technician/history/:id',
+      name: 'technician-history-detail',
+      component: () => import('@/pages/technician/TechnicianHistoryDetailPage.vue'),
+      meta: { requiresTechnician: true, title: 'รายละเอียดประวัติการซ่อม', active: 'history' },
     },
     {
       path: '/technician/account',
@@ -145,7 +200,7 @@ router.beforeEach(async (to) => {
 
   if (to.path === '/login' || to.path === '/register') {
     if (auth.isAuthenticated && auth.isTechnician) {
-      return { name: 'technician-account' }
+      return { name: 'technician-requests' }
     }
     if (auth.isAuthenticated && !auth.isAdmin) {
       return { name: 'home' }

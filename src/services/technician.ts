@@ -2,6 +2,7 @@ import { apiFetch } from '@/services/api'
 import type {
   TechnicianLocation,
   TechnicianProfile,
+  TechnicianRequest,
   UpdateTechnicianProfileRequest,
 } from '@/types/technician'
 
@@ -39,4 +40,45 @@ export async function refreshTechnicianLocation(
 export async function getWaitingAcceptCount(): Promise<number> {
   const response = await apiFetch<Envelope<{ count: number }>>('/api/technician/requests/pending-count')
   return response.data.count
+}
+
+export async function listWaitingRequests(): Promise<TechnicianRequest[]> {
+  const response = await apiFetch<Envelope<TechnicianRequest[]>>('/api/technician/requests')
+  return response.data
+}
+
+export async function acceptRequest(id: number): Promise<TechnicianRequest> {
+  const response = await apiFetch<Envelope<TechnicianRequest>>(`/api/technician/requests/${id}/accept`, {
+    method: 'POST',
+  })
+  return response.data
+}
+
+export async function declineRequest(id: number): Promise<void> {
+  await apiFetch<{ message: string }>(`/api/technician/requests/${id}/decline`, {
+    method: 'POST',
+  })
+}
+
+export async function getTechnicianPendingJobs(sort?: string): Promise<import('@/types/technician').TechnicianJobItem[]> {
+  const url = sort ? `/api/technician/jobs/pending?sort=${encodeURIComponent(sort)}` : '/api/technician/jobs/pending'
+  const response = await apiFetch<Envelope<import('@/types/technician').TechnicianJobItem[]>>(url)
+  return response.data
+}
+
+export async function getTechnicianHistoryJobs(): Promise<import('@/types/technician').TechnicianJobItem[]> {
+  const response = await apiFetch<Envelope<import('@/types/technician').TechnicianJobItem[]>>('/api/technician/jobs/history')
+  return response.data
+}
+
+export async function getTechnicianJobDetail(id: number): Promise<import('@/types/technician').TechnicianJobDetail> {
+  const response = await apiFetch<Envelope<import('@/types/technician').TechnicianJobDetail>>(`/api/technician/jobs/${id}`)
+  return response.data
+}
+
+export async function completeTechnicianJob(id: number): Promise<import('@/types/technician').TechnicianJobDetail> {
+  const response = await apiFetch<Envelope<import('@/types/technician').TechnicianJobDetail>>(`/api/technician/jobs/${id}/complete`, {
+    method: 'POST',
+  })
+  return response.data
 }

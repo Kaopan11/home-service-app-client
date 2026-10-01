@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import TechnicianLayout from '@/components/technician/TechnicianLayout.vue'
-import { MOCK_ADMIN_SERVICES } from '@/data/adminServices'
 import {
   getTechnicianProfile,
   refreshTechnicianLocation,
@@ -11,6 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useTechnicianJobsStore } from '@/stores/technicianJobs'
 import { isApiError, type AdminUser } from '@/types/auth'
 import type { TechnicianProfile, TechnicianServiceOption } from '@/types/technician'
+import { getStoredAccessToken } from '@/utils/authStorage'
 
 type FormState = {
   firstName: string
@@ -79,7 +79,7 @@ function applyProfile(profile: TechnicianProfile): void {
 
 function applyFallback(): void {
   const user = auth.user
-  services.value = MOCK_ADMIN_SERVICES.map((item) => ({ id: item.id, name: item.name }))
+  services.value = []
   const next: FormState = {
     firstName: user?.firstName ?? '',
     lastName: user?.lastName ?? '',
@@ -116,7 +116,10 @@ async function loadProfile(): Promise<void> {
     applyProfile(await getTechnicianProfile())
   } catch (err) {
     applyFallback()
-    error.value = isApiError(err) ? err.message : 'ไม่สามารถโหลดข้อมูลบัญชีได้'
+    const token = getStoredAccessToken()
+    if (!token?.startsWith('demo-')) {
+      error.value = isApiError(err) ? err.message : 'ไม่สามารถโหลดข้อมูลบัญชีได้'
+    }
   } finally {
     loading.value = false
   }

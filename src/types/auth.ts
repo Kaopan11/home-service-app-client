@@ -25,6 +25,12 @@ export type AuthSession = {
   tokenType: string
 }
 
+export type FacebookLoginRequest = {
+  accessToken: string
+  refreshToken: string
+  expiresIn: number
+}
+
 export type RegisterRequest = {
   fullName: string
   phone: string

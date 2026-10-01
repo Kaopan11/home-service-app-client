@@ -16,7 +16,9 @@ defineProps<{
         <span class="icon icon--tag"></span>
         {{ formatServicePrice(service.priceMin, service.priceMax) }}
       </p>
-      <button class="btn btn--ghost" type="button">เลือกบริการ</button>
+      <RouterLink class="btn btn--ghost" :to="{ name: 'service-detail', params: { id: service.id } }">
+        เลือกบริการ
+      </RouterLink>
     </section>
   </article>
 </template>
