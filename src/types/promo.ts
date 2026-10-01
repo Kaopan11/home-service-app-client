@@ -12,6 +12,14 @@ export type PromotionDto = {
   updated_at: string
 }
 
+export type ApplyPromoResult = {
+  code: string
+  discount_type: PromoDiscountType
+  discount_value: number
+  discount_amount: number
+  payable_amount: number
+}
+
 export type PromotionPayload = {
   code: string
   discount_type: PromoDiscountType

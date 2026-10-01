@@ -2,6 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { createCardToken } from '@/services/omise'
 import { createCharge, type BookingCharge } from '@/services/paymentApi'
+import { applyPromotionCode } from '@/services/promoApi'
 
 const props = withDefaults(
   defineProps<{
@@ -10,6 +11,8 @@ const props = withDefaults(
   }>(),
   { totalPrice: 0 },
 )
+
+const payableAmount = defineModel<number>('payableAmount', { default: 0 })
 
 const method = defineModel<'promptpay' | 'card'>('method', { default: 'card' })
 const valid = defineModel<boolean>('valid', { default: false })
@@ -30,9 +33,21 @@ const card = reactive({
 
 const promoCode = ref('')
 const promoApplied = ref(false)
+const promoBusy = ref(false)
+const promoError = ref('')
 
 const submitting = ref(false)
 const submitError = ref('')
+
+watch(
+  () => props.totalPrice,
+  (amount) => {
+    if (!promoApplied.value) {
+      payableAmount.value = amount
+    }
+  },
+  { immediate: true },
+)
 
 function formatCardNumber(event: Event) {
   const digits = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, CARD_NUMBER_LENGTH)
@@ -85,9 +100,19 @@ function isCardExpired(month: number, year: number): boolean {
   return firstDayAfterExpiry <= now
 }
 
-function applyPromo() {
-  if (!promoCode.value.trim() || promoApplied.value) return
-  promoApplied.value = true
+async function applyPromo() {
+  if (!promoCode.value.trim() || promoApplied.value || promoBusy.value) return
+  promoError.value = ''
+  promoBusy.value = true
+  try {
+    const result = await applyPromotionCode(promoCode.value.trim(), props.totalPrice)
+    payableAmount.value = result.payable_amount
+    promoApplied.value = true
+  } catch (error) {
+    promoError.value = error instanceof Error ? error.message : 'ไม่สามารถใช้รหัสโปรโมชันได้'
+  } finally {
+    promoBusy.value = false
+  }
 }
 
 const isCardValid = computed(() => {
@@ -145,7 +170,7 @@ async function submit(): Promise<boolean> {
       expirationYear: 2000 + Number(expiryYear),
       securityCode: card.cvv,
     })
-    const charge = await createCharge(token, props.totalPrice, props.booking, 'HomeServices booking')
+    const charge = await createCharge(token, payableAmount.value, props.booking, 'HomeServices booking')
     if (!charge.paid || charge.status !== 'successful') {
       submitError.value = 'การชำระเงินไม่สำเร็จ กรุณาตรวจสอบบัตรหรือลองใหม่อีกครั้ง'
       return false
@@ -282,17 +307,18 @@ defineExpose({ submit, submitting })
           v-model="promoCode"
           type="text"
           placeholder="กรุณากรอกโค้ดส่วนลด (ถ้ามี)"
-          :disabled="promoApplied"
+          :disabled="promoApplied || promoBusy || submitting"
         />
         <button
           class="btn btn--primary"
           type="button"
-          :disabled="!promoCode.trim() || promoApplied"
+          :disabled="!promoCode.trim() || promoApplied || promoBusy || submitting"
           @click="applyPromo"
         >
-          {{ promoApplied ? 'ใช้แล้ว' : 'ใช้โค้ด' }}
+          {{ promoApplied ? 'ใช้แล้ว' : promoBusy ? 'กำลังตรวจ...' : 'ใช้โค้ด' }}
         </button>
       </div>
+      <p v-if="promoError" class="payment__error" role="alert">{{ promoError }}</p>
     </label>
   </section>
 </template>
