@@ -8,6 +8,7 @@ defineProps<{
   image: string
   title: string
   currentStep: number
+  hideHeader?: boolean
 }>()
 
 const { isAuthenticated } = storeToRefs(useAuthStore())
@@ -15,7 +16,7 @@ const { isAuthenticated } = storeToRefs(useAuthStore())
 
 <template>
   <div class="booking">
-    <TheHeader :guest="!isAuthenticated" />
+    <TheHeader v-if="!hideHeader" :guest="!isAuthenticated" />
 
     <section class="hero" :style="{ backgroundImage: `url(${image})` }">
       <div class="hero__inner">

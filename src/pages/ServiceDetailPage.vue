@@ -107,55 +107,63 @@ function goNext() {
 </script>
 
 <template>
-  <div v-if="loading" class="booking-status">
+  <div class="service-detail">
     <TheHeader :guest="!isAuthenticated" />
-    <p>กำลังโหลดบริการ...</p>
+
+    <div v-if="loading" class="booking-status">
+      <p>กำลังโหลดบริการ...</p>
+    </div>
+
+    <BookingLayout
+      v-else-if="detail"
+      hide-header
+      :image="detail.image"
+      :title="detail.title"
+      :current-step="1"
+    >
+      <BookingOptionList
+        :title="`เลือกรายการบริการ${detail.title}`"
+        :options="detail.options"
+        :quantities="quantities"
+        @increment="increment"
+        @decrement="decrement"
+      />
+
+      <template #summary>
+        <BookingSummary :items="selectedItems" :total-price="totalPrice" />
+      </template>
+
+      <template #nav>
+        <button class="btn btn--secondary" type="button" @click="goBack">
+          <span aria-hidden="true">‹</span>
+          ย้อนกลับ
+        </button>
+        <button class="btn btn--primary" type="button" :disabled="!canContinue" @click="goNext">
+          ดำเนินการต่อ
+          <span aria-hidden="true">›</span>
+        </button>
+      </template>
+    </BookingLayout>
+
+    <section v-else class="booking-status">
+      <p>ไม่พบบริการนี้</p>
+      <RouterLink class="btn btn--secondary" :to="{ name: 'service' }">กลับไปหน้ารายการ</RouterLink>
+    </section>
   </div>
-
-  <BookingLayout
-    v-else-if="detail"
-    :image="detail.image"
-    :title="detail.title"
-    :current-step="1"
-  >
-    <BookingOptionList
-      :title="`เลือกรายการบริการ${detail.title}`"
-      :options="detail.options"
-      :quantities="quantities"
-      @increment="increment"
-      @decrement="decrement"
-    />
-
-    <template #summary>
-      <BookingSummary :items="selectedItems" :total-price="totalPrice" />
-    </template>
-
-    <template #nav>
-      <button class="btn btn--secondary" type="button" @click="goBack">
-        <span aria-hidden="true">‹</span>
-        ย้อนกลับ
-      </button>
-      <button class="btn btn--primary" type="button" :disabled="!canContinue" @click="goNext">
-        ดำเนินการต่อ
-        <span aria-hidden="true">›</span>
-      </button>
-    </template>
-  </BookingLayout>
-
-  <section v-else class="booking-status">
-    <TheHeader :guest="!isAuthenticated" />
-    <p>ไม่พบบริการนี้</p>
-    <RouterLink class="btn btn--secondary" :to="{ name: 'service' }">กลับไปหน้ารายการ</RouterLink>
-  </section>
 </template>
 
 <style scoped>
+.service-detail {
+  min-height: 100svh;
+  background: var(--bg);
+}
+
 .booking-status {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  min-height: 100svh;
+  min-height: calc(100svh - 5rem);
   padding: 6rem 1.5rem;
   background: var(--bg);
   color: var(--gray-700);
